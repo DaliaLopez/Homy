@@ -1,33 +1,29 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 import { UserRulesService } from './user-rules.service';
 import { UserEntity } from '../entities/user.entity';
-import { describe, it } from 'node:test';
-import { expect } from '@jest/globals';
+import { beforeEach, describe, it, expect } from '@jest/globals';
 
 describe('UserRulesService', () => {
-    const service = new UserRulesService();
+    let service: UserRulesService;
 
-    it('allows registration when email is available', () => {
-        expect(() =>
-            service.ensureEmailIsAvailable('test@correo.com', null),
-        ).not.toThrow();
+    beforeEach(() => {
+        service = new UserRulesService();
     });
 
-    it('rejects registration when email already exists', () => {
-        const existingUser = { id: 1, email: 'test@correo.com' } as UserEntity;
-
-        expect(() =>
-            service.ensureEmailIsAvailable('test@correo.com', existingUser),
-        ).toThrow(ConflictException);
+    it('it should be defined', () => {
+        expect(service).toBeDefined();
     });
 
-    it('validates correct phone numbers', () => {
-        expect(() => service.ensureValidPhoneFormat('3001234567')).not.toThrow();
-    });
+    describe('ensureEmailIsUnique', () => {
+        it('it should not throw an error when existingUser is null', () => {
+            expect(() => service.ensureEmailIsUnique(null, 'new@email.com')).not.toThrow();
+        });
 
-    it('rejects invalid phone formats', () => {
-        expect(() => service.ensureValidPhoneFormat('123')).toThrow(
-            BadRequestException,
-        );
+        it('should throw ConflictException if existingUser has data', () => {
+            const mockUser = { id: 'uuid-1', email: 'used@email.com' } as UserEntity;
+
+            expect(() => service.ensureEmailIsUnique(mockUser, 'usado@email.com'))
+                .toThrow(ConflictException);
+        });
     });
 });

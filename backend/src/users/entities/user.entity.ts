@@ -1,35 +1,50 @@
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    OneToMany,
-    PrimaryGeneratedColumn,
-} from 'typeorm';
-import { RequestEntity } from '../../requests/entities/request.entity';
-import type { UserRole } from '../user.interface';
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { WorkersEntity } from '../../workers/entities/worker.entity';
+import { RequestsEntity } from '../../requests/entities/request.entity';
+import { ReviewsEntity } from '../../reviews/entities/review.entity';
+import { ReportEntity } from '../../reports/entities/report.entity';
+import { VerificationEntity } from '../../verifications/entities/verification.entity';
 
 @Entity('users')
 export class UserEntity {
-    @PrimaryGeneratedColumn()
-    id!: number;
+    @PrimaryGeneratedColumn('uuid')
+    id!: string;
 
-    @Column({ length: 100 })
+    @Column({ type: 'varchar', length: 150 })
     name!: string;
 
-    @Column({ unique: true, length: 150 })
+    @Column({ type: 'varchar', length: 150, unique: true })
     email!: string;
 
-    @Column({ length: 20 })
+    @Column({ name: 'password_hash', length: 255, select: false })
+    passwordHash!: string;
+
+    @Column({ type: 'varchar', length: 20, nullable: true })
     phone!: string;
 
-    @Column({ length: 150 })
+    @Column({ type: 'varchar', length: 255, nullable: true })
     location!: string;
 
-    @Column({ default: 'client', length: 20 })
-    role!: UserRole;
+    @Column({ type: 'varchar', length: 50, default: 'user' })
+    role!: string;
 
-    @OneToMany(() => RequestEntity, (request) => request.user)
-    requests!: RequestEntity[];
+    @OneToMany(() => WorkersEntity, (worker) => worker.user)
+    workers!: WorkersEntity[];
+
+    @OneToMany(() => RequestsEntity, (request) => request.user)
+    requests!: RequestsEntity[];
+
+    @OneToMany(() => ReviewsEntity, (review) => review.user)
+    reviews!: ReviewsEntity[];
+
+    @OneToMany(() => ReportEntity, (report) => report.reporter)
+    reportsMade!: ReportEntity[];
+
+    @OneToMany(() => ReportEntity, (report) => report.reportedUser)
+    reportsReceived!: ReportEntity[];
+
+    @OneToMany(() => VerificationEntity, (verification) => verification.reviewedBy)
+    verificationsReviewed!: VerificationEntity[];
 
     @CreateDateColumn({ name: 'created_at' })
     createdAt!: Date;
