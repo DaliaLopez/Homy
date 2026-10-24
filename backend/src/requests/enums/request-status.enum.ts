@@ -1,8 +1,9 @@
 export enum RequestStatus {
     REQUESTED = 'requested',
-    CONFIRMED = 'confirmed',
+    ACCEPTED = 'accepted',
     IN_PROGRESS = 'in_progress',
     COMPLETED = 'completed',
-    REJECTED = 'rejected',
-    CANCELLED = 'cancelled',
+    REJECTED = 'rejected', // cuando el trabajador rechaza la solicitud
+    CANCELLED = 'cancelled', // cuando el usuario cancela la solicitud
+    EXPIRED = 'expired',
 }

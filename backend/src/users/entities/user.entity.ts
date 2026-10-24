@@ -1,7 +1,7 @@
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { WorkersEntity } from '../../workers/entities/worker.entity';
-import { RequestsEntity } from '../../requests/entities/request.entity';
-import { ReviewsEntity } from '../../reviews/entities/review.entity';
+import { WorkerEntity } from '../../workers/entities/worker.entity';
+import { RequestEntity } from '../../requests/entities/request.entity';
+import { ReviewEntity } from '../../reviews/entities/review.entity';
 import { ReportEntity } from '../../reports/entities/report.entity';
 import { VerificationEntity } from '../../verifications/entities/verification.entity';
 
@@ -28,14 +28,14 @@ export class UserEntity {
     @Column({ type: 'varchar', length: 50, default: 'user' })
     role!: string;
 
-    @OneToMany(() => WorkersEntity, (worker) => worker.user)
-    workers!: WorkersEntity[];
+    @OneToMany(() => WorkerEntity, (worker) => worker.user)
+    workers!: WorkerEntity[];
 
-    @OneToMany(() => RequestsEntity, (request) => request.user)
-    requests!: RequestsEntity[];
+    @OneToMany(() => RequestEntity, (request) => request.user)
+    requests!: RequestEntity[];
 
-    @OneToMany(() => ReviewsEntity, (review) => review.user)
-    reviews!: ReviewsEntity[];
+    @OneToMany(() => ReviewEntity, (review) => review.user)
+    reviews!: ReviewEntity[];
 
     @OneToMany(() => ReportEntity, (report) => report.reporter)
     reportsMade!: ReportEntity[];
