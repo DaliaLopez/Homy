@@ -37,7 +37,7 @@ export class UserEntity {
   @OneToMany(() => WorkerEntity, (worker) => worker.user)
   workers!: WorkerEntity[];
 
-  @OneToMany(() => RequestEntity, (request) => request.user)
+  @OneToMany(() => RequestEntity, (request) => request.client)
   requests!: RequestEntity[];
 
   @OneToMany(() => ReviewEntity, (review) => review.user)
@@ -46,7 +46,7 @@ export class UserEntity {
   @OneToMany(() => ReportEntity, (report) => report.reporter)
   reportsMade!: ReportEntity[];
 
-  @OneToMany(() => ReportEntity, (report) => report.reportedUser)
+  @OneToMany(() => ReportEntity, (report) => report.reportedUserId)
   reportsReceived!: ReportEntity[];
 
   @OneToMany(
