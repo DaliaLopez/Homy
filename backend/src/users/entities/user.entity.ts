@@ -46,7 +46,7 @@ export class UserEntity {
   @OneToMany(() => ReportEntity, (report) => report.reporter)
   reportsMade!: ReportEntity[];
 
-  @OneToMany(() => ReportEntity, (report) => report.reportedUser)
+  @OneToMany(() => ReportEntity, (report) => report.reportedUserId)
   reportsReceived!: ReportEntity[];
 
   @OneToMany(
