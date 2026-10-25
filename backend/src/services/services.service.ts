@@ -4,9 +4,11 @@ import { Repository } from 'typeorm';
 
 import { ServiceEntity } from './entities/service.entity';
 import { CategoryEntity } from '../categories/entities/category.entity';
+import { RequestEntity } from '../requests/entities/request.entity';
 
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { ServicesRulesService } from './services-rules/services-rules.service';
 
 @Injectable()
 export class ServicesService {
@@ -17,8 +19,13 @@ export class ServicesService {
     @InjectRepository(CategoryEntity)
     private readonly categoriesRepository: Repository<CategoryEntity>,
 
-    @InjectRepository(WorkerProfileEntity)
-    private readonly workersRepository: Repository<WorkerProfileEntity>,
+    @InjectRepository(WorkerEntity)
+    private readonly workersRepository: Repository<WorkerEntity>,
+
+    @InjectRepository(RequestEntity)
+    private readonly requestsRepository: Repository<RequestEntity>,
+
+    private readonly servicesRulesService: ServicesRulesService,
   ) {}
 
   async create(userId: string, dto: CreateServiceDto): Promise<ServiceEntity> {
@@ -33,7 +40,7 @@ export class ServicesService {
       );
     }
 
-    // Buscar el perfil de trabajador del usuario autenticado.
+    // Buscar el perfil del trabajador autenticado.
     const worker = await this.workersRepository.findOne({
       where: {
         user: { id: userId },
@@ -84,13 +91,51 @@ export class ServicesService {
     return service;
   }
 
-  async update(id: string, dto: UpdateServiceDto): Promise<ServiceEntity> {
-    //Buscar el servicio que queremos actualizar.
+  // Busca las solicitudes relacionadas con un servicio y verifica sus estados.
+  private async ensureServiceHasNoActiveRequests(
+    serviceId: string,
+  ): Promise<void> {
+    const requests = await this.requestsRepository.find({
+      where: {
+        service: { id: serviceId },
+      },
+      select: {
+        status: true,
+      },
+    });
+
+    const statuses = requests.map((request) => request.status);
+
+    this.servicesRulesService.ensureHasNoActiveRequests(statuses);
+  }
+
+  async update(
+    id: string,
+    userId: string,
+    dto: UpdateServiceDto,
+  ): Promise<ServiceEntity> {
+    // Buscar el servicio.
     const service = await this.findOne(id);
 
-    //Revisa si se envio una categoría nueva.
+    // Buscar el perfil del trabajador autenticado.
+    const worker = await this.workersRepository.findOne({
+      where: {
+        user: { id: userId },
+      },
+    });
+
+    if (!worker) {
+      throw new NotFoundException('Worker profile was not found for this user');
+    }
+
+    // Verificar que el servicio pertenezca al trabajador.
+    this.servicesRulesService.ensureCanBeModified(service, worker.id);
+
+    // Impedir cambios si existen solicitudes activas.
+    await this.ensureServiceHasNoActiveRequests(id);
+
+    // Buscar y asignar una categoría nueva, si fue enviada.
     if (dto.categoryId !== undefined) {
-      // Si se envia una categoria nueva la busca en la base de datos.
       const category = await this.categoriesRepository.findOneBy({
         id: dto.categoryId,
       });
@@ -101,29 +146,47 @@ export class ServicesService {
         );
       }
 
-      //Asigna la nueva categoría al servicio.
       service.category = category;
     }
 
-    //Revisa si enviaron valores nuevos para los demás campos del servicio.
+    // Actualizar el nombre, si fue enviado.
     if (dto.name !== undefined) {
       service.name = dto.name;
     }
 
+    // Actualizar la descripción, si fue enviada.
     if (dto.description !== undefined) {
       service.description = dto.description;
     }
 
+    // Actualizar el precio, si fue enviado.
     if (dto.price !== undefined) {
       service.price = dto.price;
     }
 
-    //Guarda los cambios actualizados en la base de datos.
     return this.servicesRepository.save(service);
   }
 
-  async remove(id: string): Promise<{ message: string }> {
+  async remove(id: string, userId: string): Promise<{ message: string }> {
+    // Buscar el servicio.
     const service = await this.findOne(id);
+
+    // Buscar el perfil del trabajador autenticado.
+    const worker = await this.workersRepository.findOne({
+      where: {
+        user: { id: userId },
+      },
+    });
+
+    if (!worker) {
+      throw new NotFoundException('Worker profile was not found for this user');
+    }
+
+    // Verificar que el servicio pertenezca al trabajador.
+    this.servicesRulesService.ensureCanBeModified(service, worker.id);
+
+    // Impedir la eliminación si hay solicitudes activas.
+    await this.ensureServiceHasNoActiveRequests(id);
 
     await this.servicesRepository.remove(service);
 

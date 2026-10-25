@@ -48,14 +48,18 @@ export class ServicesController {
 
   @Patch(':id')
   update(
+    @Req() req: { user: { id: string } },
     @Param('id', ParseUUIDPipe) id: string,
     @Body(serviceValidationPipe) dto: UpdateServiceDto,
   ) {
-    return this.servicesService.update(id, dto);
+    return this.servicesService.update(id, req.user.id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.servicesService.remove(id);
+  remove(
+    @Req() req: { user: { id: string } },
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.servicesService.remove(id, req.user.id);
   }
 }
