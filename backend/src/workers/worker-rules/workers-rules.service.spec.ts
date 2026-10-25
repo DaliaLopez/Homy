@@ -1,18 +1,24 @@
+import { describe, beforeEach, it, expect } from '@jest/globals';
 import { ConflictException } from '@nestjs/common';
-import { WorkerEntity } from '../entities/worker.entity';
 import { WorkersRulesService } from './workers-rules.service';
-import { describe, it, expect } from '@jest/globals';
+import { WorkerEntity } from '../entities/worker.entity';
 
-describe('WorkersRulesService', () => {
-  const rules = new WorkersRulesService();
+describe('WorkersRulesServiceTest', () => {
+  let rulesService: WorkersRulesService;
 
-  it('permite crear el perfil si el usuario no tiene uno', () => {
-    expect(() => rules.ensureProfileDoesNotExist(null)).not.toThrow();
+  beforeEach(() => {
+    rulesService = new WorkersRulesService();
   });
 
-  it('lanza ConflictException si el usuario ya tiene perfil', () => {
-    expect(() =>
-      rules.ensureProfileDoesNotExist({ id: 'w1' } as WorkerEntity),
-    ).toThrow(ConflictException);
+  it('allows creating a profile when the user does not have one', () => {
+    expect(() => rulesService.ensureProfileDoesNotExist(null)).not.toThrow();
+  });
+
+  it('throws ConflictException when the user already has a profile', () => {
+    const existing = { id: 'worker-1' } as WorkerEntity;
+
+    expect(() => rulesService.ensureProfileDoesNotExist(existing)).toThrow(
+      ConflictException,
+    );
   });
 });

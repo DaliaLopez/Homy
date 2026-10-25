@@ -1,110 +1,221 @@
+import { describe, jest, beforeEach, it, expect } from '@jest/globals';
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { UserEntity } from '../users/entities/user.entity';
-import { VerificationStatus } from '../verifications/enums/verification-status.enum';
+import { MoreThanOrEqual } from 'typeorm';
+import { WorkersService } from './workers.service';
 import { WorkerEntity } from './entities/worker.entity';
 import { WorkersRulesService } from './worker-rules/workers-rules.service';
-import { WorkersService } from './workers.service';
-import { describe, beforeEach, jest, it, expect } from '@jest/globals';
+import { UserEntity } from '../users/entities/user.entity';
+import { VerificationStatus } from '../verifications/enums/verification-status.enum';
 
-describe('WorkersService', () => {
+describe('WorkersServiceTest', () => {
   let service: WorkersService;
-  const workersRepo = {
-    findOne: jest.fn(),
-    find: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-    update: jest.fn(),
+
+  const workersRepositoryMock = {
+    find: jest.fn<(options: any) => Promise<WorkerEntity[]>>(),
+    findOne: jest.fn<(options: any) => Promise<WorkerEntity | null>>(),
+    create: jest.fn<(worker: any) => WorkerEntity>(),
+    save: jest.fn<(worker: WorkerEntity) => Promise<WorkerEntity>>(),
+    update: jest.fn<(criteria: any, changes: any) => Promise<unknown>>(),
   };
-  const usersRepo = { update: jest.fn() };
+
+  const usersRepositoryMock = {
+    update: jest.fn<(criteria: any, changes: any) => Promise<unknown>>(),
+  };
+
+  const workersRulesServiceMock = {
+    ensureProfileDoesNotExist: jest.fn(),
+  };
+
+  const dto = {
+    description: 'Plomero con experiencia en hogares',
+    experience: 'Diez años trabajando en obras residenciales',
+  };
 
   beforeEach(async () => {
-    jest.resetAllMocks();
-    const module: TestingModule = await Test.createTestingModule({
+    jest.clearAllMocks();
+
+    const moduleRef = await Test.createTestingModule({
       providers: [
         WorkersService,
-        WorkersRulesService,
-        { provide: getRepositoryToken(WorkerEntity), useValue: workersRepo },
-        { provide: getRepositoryToken(UserEntity), useValue: usersRepo },
+        {
+          provide: getRepositoryToken(WorkerEntity),
+          useValue: workersRepositoryMock,
+        },
+        {
+          provide: getRepositoryToken(UserEntity),
+          useValue: usersRepositoryMock,
+        },
+        {
+          provide: WorkersRulesService,
+          useValue: workersRulesServiceMock,
+        },
       ],
     }).compile();
-    service = module.get(WorkersService);
+
+    service = moduleRef.get(WorkersService);
   });
 
-  it('crea el perfil y convierte al usuario en trabajador', async () => {
-    workersRepo.findOne.mockResolvedValue(null);
-    workersRepo.create.mockImplementation((x) => x);
-    workersRepo.save.mockImplementation((x) =>
-      Promise.resolve({ id: 'w1', ...x }),
-    );
+  it('creates the profile and turns the user into a worker', async () => {
+    const createdWorker = { ...dto } as WorkerEntity;
+    const savedWorker = { ...createdWorker, id: 'worker-1' };
 
-    const result = await service.create('u1', {
-      description: 'Plomero con años de experiencia',
-      experience: '10 años en obra',
+    workersRepositoryMock.findOne.mockResolvedValue(null);
+    workersRepositoryMock.create.mockReturnValue(createdWorker);
+    workersRepositoryMock.save.mockResolvedValue(savedWorker);
+
+    const result = await service.create('user-1', dto);
+
+    expect(
+      workersRulesServiceMock.ensureProfileDoesNotExist,
+    ).toHaveBeenCalledWith(null);
+    expect(workersRepositoryMock.create).toHaveBeenCalledWith({
+      ...dto,
+      user: { id: 'user-1' },
     });
-
-    expect(result.id).toBe('w1');
-    expect(usersRepo.update).toHaveBeenCalledWith(
-      { id: 'u1', role: 'user' },
+    expect(workersRepositoryMock.save).toHaveBeenCalledWith(createdWorker);
+    expect(usersRepositoryMock.update).toHaveBeenCalledWith(
+      { id: 'user-1', role: 'user' },
       { role: 'worker' },
     );
+    expect(result.id).toEqual('worker-1');
   });
 
-  it('no crea un segundo perfil para el mismo usuario', async () => {
-    workersRepo.findOne.mockResolvedValue({ id: 'w1' });
+  it('does not save anything when the user already has a profile', async () => {
+    workersRepositoryMock.findOne.mockResolvedValue({
+      id: 'worker-1',
+    } as WorkerEntity);
+    workersRulesServiceMock.ensureProfileDoesNotExist.mockImplementationOnce(
+      () => {
+        throw new ConflictException();
+      },
+    );
 
-    await expect(
-      service.create('u1', {
-        description: 'x'.repeat(10),
-        experience: 'y'.repeat(10),
-      }),
-    ).rejects.toThrow(ConflictException);
-    expect(workersRepo.save).not.toHaveBeenCalled();
+    await expect(service.create('user-1', dto)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+
+    expect(workersRepositoryMock.save).not.toHaveBeenCalled();
+    expect(usersRepositoryMock.update).not.toHaveBeenCalled();
   });
 
-  it('findOne lanza NotFoundException si el perfil no existe', async () => {
-    workersRepo.findOne.mockResolvedValue(null);
-    await expect(service.findOne('w404')).rejects.toThrow(NotFoundException);
+  it('returns a worker when the id exists', async () => {
+    const workerMock = { id: 'worker-1', ...dto } as WorkerEntity;
+    workersRepositoryMock.findOne.mockResolvedValue(workerMock);
+
+    const result = await service.findOne('worker-1');
+
+    expect(result).toEqual(workerMock);
+    expect(workersRepositoryMock.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'worker-1' } }),
+    );
   });
 
-  it('updateMine solo cambia los campos enviados', async () => {
-    const worker = {
-      id: 'w1',
-      description: 'vieja descripción',
-      experience: 'vieja experiencia',
-    };
-    workersRepo.findOne.mockResolvedValue(worker);
-    workersRepo.save.mockImplementation((x) => Promise.resolve(x));
+  it('throws NotFoundException when the worker does not exist', async () => {
+    workersRepositoryMock.findOne.mockResolvedValue(null);
 
-    const result = await service.updateMine('u1', {
-      description: 'nueva descripción larga',
+    await expect(service.findOne('worker-1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('returns the profile of the authenticated user', async () => {
+    const workerMock = { id: 'worker-1', ...dto } as WorkerEntity;
+    workersRepositoryMock.findOne.mockResolvedValue(workerMock);
+
+    const result = await service.findMine('user-1');
+
+    expect(result).toEqual(workerMock);
+    expect(workersRepositoryMock.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { user: { id: 'user-1' } } }),
+    );
+  });
+
+  it('throws NotFoundException when the user has no profile yet', async () => {
+    workersRepositoryMock.findOne.mockResolvedValue(null);
+
+    await expect(service.findMine('user-1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('updates only the fields that were sent', async () => {
+    const workerMock = { id: 'worker-1', ...dto } as WorkerEntity;
+    workersRepositoryMock.findOne.mockResolvedValue(workerMock);
+    workersRepositoryMock.save.mockImplementation((worker) =>
+      Promise.resolve(worker),
+    );
+
+    const result = await service.updateMine('user-1', {
+      description: 'Nueva descripción del perfil',
     });
 
-    expect(result.description).toBe('nueva descripción larga');
-    expect(result.experience).toBe('vieja experiencia');
+    expect(result.description).toEqual('Nueva descripción del perfil');
+    expect(result.experience).toEqual(dto.experience);
   });
 
-  it('findAll filtra por calificación mínima y estado de verificación', async () => {
-    workersRepo.find.mockResolvedValue([]);
+  it('filters workers by rating and verification status', async () => {
+    workersRepositoryMock.find.mockResolvedValue([]);
 
     await service.findAll({
       minRating: 4,
       verificationStatus: VerificationStatus.VERIFIED,
     });
 
-    const options = workersRepo.find.mock.calls[0][0];
-    expect(options.where.verificationStatus).toBe(VerificationStatus.VERIFIED);
-    expect(options.where.averageRating).toBeDefined();
-    expect(options.take).toBe(50);
+    expect(workersRepositoryMock.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          verificationStatus: VerificationStatus.VERIFIED,
+          averageRating: MoreThanOrEqual(4),
+        },
+        take: 50,
+      }),
+    );
   });
 
-  it('setVerificationStatus actualiza el perfil existente', async () => {
-    workersRepo.findOne.mockResolvedValue({ id: 'w1' });
-    await service.setVerificationStatus('w1', VerificationStatus.VERIFIED);
-    expect(workersRepo.update).toHaveBeenCalledWith(
-      { id: 'w1' },
+  it('respects the limit sent in the query', async () => {
+    workersRepositoryMock.find.mockResolvedValue([]);
+
+    await service.findAll({ limit: 10 });
+
+    expect(workersRepositoryMock.find).toHaveBeenCalledWith(
+      expect.objectContaining({ where: {}, take: 10 }),
+    );
+  });
+
+  it('updates the verification status of an existing profile', async () => {
+    workersRepositoryMock.findOne.mockResolvedValue({
+      id: 'worker-1',
+    } as WorkerEntity);
+
+    await service.setVerificationStatus(
+      'worker-1',
+      VerificationStatus.VERIFIED,
+    );
+
+    expect(workersRepositoryMock.update).toHaveBeenCalledWith(
+      { id: 'worker-1' },
       { verificationStatus: VerificationStatus.VERIFIED },
+    );
+  });
+
+  it('does not update the verification status of a missing profile', async () => {
+    workersRepositoryMock.findOne.mockResolvedValue(null);
+
+    await expect(
+      service.setVerificationStatus('worker-1', VerificationStatus.VERIFIED),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    expect(workersRepositoryMock.update).not.toHaveBeenCalled();
+  });
+
+  it('updates the average rating', async () => {
+    await service.updateAverageRating('worker-1', 4.5);
+
+    expect(workersRepositoryMock.update).toHaveBeenCalledWith(
+      { id: 'worker-1' },
+      { averageRating: 4.5 },
     );
   });
 });
