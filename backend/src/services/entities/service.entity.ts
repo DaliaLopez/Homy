@@ -4,13 +4,14 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  PrimaryColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
+import { CategoryEntity } from '../../categories/entities/category.entity';
 
 @Entity('services')
 export class ServiceEntity {
-  @PrimaryColumn()
-  id!: number;
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
 
   @Column({ length: 500 })
   name!: string;

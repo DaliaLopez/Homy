@@ -30,8 +30,4 @@ export class CreateServiceDto {
   @IsUUID()
   @IsNotEmpty()
   categoryId!: string;
-
-  @IsUUID()
-  @IsNotEmpty()
-  workerId!: string;
 }

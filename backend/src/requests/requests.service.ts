@@ -10,53 +10,59 @@ import { UserEntity } from '../users/entities/user.entity';
 
 @Injectable()
 export class RequestsService {
-    constructor(
-        @InjectRepository(RequestEntity)
-        private readonly requestsRepository: Repository<RequestEntity>,
-        private readonly requestsRulesService: RequestsRulesService,
-    ) { }
+  constructor(
+    @InjectRepository(RequestEntity)
+    private readonly requestsRepository: Repository<RequestEntity>,
+    private readonly requestsRulesService: RequestsRulesService,
+  ) {}
 
-    async create(clientId: string, dto: CreateRequestDto): Promise<RequestEntity> {
-        const request = this.requestsRepository.create({
-            description: dto.description,
-            scheduledAt: new Date(dto.scheduledAt),
-            address: dto.address,
-            price: dto.price,
-            workerId: dto.workerId,
-            serviceId: dto.serviceId,
-            status: RequestStatus.REQUESTED,
-            client: { id: clientId } as UserEntity,
-        });
+  async create(
+    clientId: string,
+    dto: CreateRequestDto,
+  ): Promise<RequestEntity> {
+    const request = this.requestsRepository.create({
+      description: dto.description,
+      scheduledAt: new Date(dto.scheduledAt),
+      address: dto.address,
+      price: dto.price,
+      workerId: dto.workerId,
+      serviceId: dto.serviceId,
+      status: RequestStatus.REQUESTED,
+      client: { id: clientId } as UserEntity,
+    });
 
-        return this.requestsRepository.save(request);
+    return this.requestsRepository.save(request);
+  }
+
+  findAllByClient(clientId: string): Promise<RequestEntity[]> {
+    return this.requestsRepository.find({
+      where: { client: { id: clientId } },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findOne(id: string): Promise<RequestEntity> {
+    const request = await this.requestsRepository.findOne({
+      where: { id },
+      relations: ['client'],
+    });
+
+    if (!request) {
+      throw new NotFoundException(`Request with ID ${id} not found.`);
     }
 
-    findAllByClient(clientId: string): Promise<RequestEntity[]> {
-        return this.requestsRepository.find({
-            where: { client: { id: clientId } },
-            order: { createdAt: 'DESC' },
-        });
-    }
+    return request;
+  }
 
-    async findOne(id: string): Promise<RequestEntity> {
-        const request = await this.requestsRepository.findOne({
-            where: { id },
-            relations: ['client'],
-        });
+  async updateStatus(
+    id: string,
+    dto: UpdateRequestStatusDto,
+  ): Promise<RequestEntity> {
+    const request = await this.findOne(id);
 
-        if (!request) {
-            throw new NotFoundException(`Request with ID ${id} not found.`);
-        }
+    this.requestsRulesService.ensureCanBeUpdated(request, dto.status);
 
-        return request;
-    }
-
-    async updateStatus(id: string, dto: UpdateRequestStatusDto): Promise<RequestEntity> {
-        const request = await this.findOne(id);
-
-        this.requestsRulesService.ensureCanBeUpdated(request, dto.status);
-
-        request.status = dto.status;
-        return this.requestsRepository.save(request);
-    }
+    request.status = dto.status;
+    return this.requestsRepository.save(request);
+  }
 }
