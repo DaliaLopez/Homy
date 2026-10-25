@@ -11,10 +11,20 @@ import { RequestsModule } from './requests/requests.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { VerificationsModule } from './verifications/verifications.module';
 import { ReportsModule } from './reports/reports.module';
-import { AdminModule } from './admin/admin.module';
 
 @Module({
-  imports: [AuthModule, UsersModule, WorkersModule, ServicesModule, CategoriesModule, AvailabilityModule, RequestsModule, ReviewsModule, VerificationsModule, ReportsModule, AdminModule],
+  imports: [
+    AuthModule,
+    UsersModule,
+    WorkersModule,
+    ServicesModule,
+    CategoriesModule,
+    AvailabilityModule,
+    RequestsModule,
+    ReviewsModule,
+    VerificationsModule,
+    ReportsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
