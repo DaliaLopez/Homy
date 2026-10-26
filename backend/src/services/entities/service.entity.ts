@@ -18,7 +18,7 @@ export class ServiceEntity {
   @Column({ length: 500 })
   name!: string;
 
-  @Column({ type: 'text', length: 800 })
+  @Column({ type: 'text' })
   description!: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
