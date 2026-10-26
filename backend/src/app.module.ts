@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -11,25 +13,29 @@ import { RequestsModule } from './requests/requests.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { VerificationsModule } from './verifications/verifications.module';
 import { ReportsModule } from './reports/reports.module';
-import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
-
     ConfigModule.forRoot({ isGlobal: true }),
 
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      database: process.env.DB_DATABASE || 'homy',
-      autoLoadEntities: true,
-      synchronize: true,
-    }),
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const isProd = config.get<string>('NODE_ENV') === 'production';
 
+        return {
+          type: 'postgres' as const,
+          host: config.get<string>('DB_HOST', 'localhost'),
+          port: Number(config.get<string>('DB_PORT', '5432')),
+          username: config.getOrThrow<string>('DB_USERNAME'),
+          password: config.getOrThrow<string>('DB_PASSWORD'),
+          database: config.get<string>('DB_DATABASE', 'homy'),
+          autoLoadEntities: true,
+          synchronize: config.get<string>('DB_SYNCHRONIZE') === 'true',
+          ssl: isProd ? { rejectUnauthorized: false } : false,
+        };
+      },
+    }),
 
     AuthModule,
     UsersModule,
@@ -45,4 +51,4 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
