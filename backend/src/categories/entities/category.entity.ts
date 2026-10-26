@@ -2,9 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+
+import { ServiceEntity } from '../../services/entities/service.entity';
 
 @Entity('categories')
 export class CategoryEntity {
@@ -15,10 +18,13 @@ export class CategoryEntity {
   name!: string;
 
   @Column({ type: 'text', nullable: true })
-  description!: string;
+  description!: string | null;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
+  //Una categoría puede tener muchos servicios.
+  @OneToMany(() => ServiceEntity, (service) => service.category)
+  services!: ServiceEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

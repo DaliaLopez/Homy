@@ -1,10 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { ServiceEntity } from './entities/service.entity';
 import { CategoryEntity } from '../categories/entities/category.entity';
 import { RequestEntity } from '../requests/entities/request.entity';
+import { WorkerEntity } from '../workers/entities/worker.entity';
 
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -29,7 +34,7 @@ export class ServicesService {
   ) {}
 
   async create(userId: string, dto: CreateServiceDto): Promise<ServiceEntity> {
-    // Buscar la categoría seleccionada.
+    // Busca la categoría elegida.
     const category = await this.categoriesRepository.findOneBy({
       id: dto.categoryId,
     });
@@ -37,6 +42,13 @@ export class ServicesService {
     if (!category) {
       throw new NotFoundException(
         `Category with id ${dto.categoryId} was not found`,
+      );
+    }
+
+    // No permite crear servicios en categorías inactivas.
+    if (!category.isActive) {
+      throw new ConflictException(
+        'Cannot create a service in an inactive category',
       );
     }
 
@@ -51,13 +63,14 @@ export class ServicesService {
       throw new NotFoundException('Worker profile was not found for this user');
     }
 
-    // Crear el servicio asociado a ese perfil.
+    // Todo servicio se crea activo.
     const service = this.servicesRepository.create({
       name: dto.name,
       description: dto.description,
       price: dto.price,
       category,
       worker,
+      isActive: true,
     });
 
     return this.servicesRepository.save(service);
@@ -91,7 +104,7 @@ export class ServicesService {
     return service;
   }
 
-  // Busca las solicitudes relacionadas con un servicio y verifica sus estados.
+  // Comprueba los estados de las solicitudes asociadas al servicio.
   private async ensureServiceHasNoActiveRequests(
     serviceId: string,
   ): Promise<void> {
@@ -114,10 +127,8 @@ export class ServicesService {
     userId: string,
     dto: UpdateServiceDto,
   ): Promise<ServiceEntity> {
-    // Buscar el servicio.
     const service = await this.findOne(id);
 
-    // Buscar el perfil del trabajador autenticado.
     const worker = await this.workersRepository.findOne({
       where: {
         user: { id: userId },
@@ -128,13 +139,12 @@ export class ServicesService {
       throw new NotFoundException('Worker profile was not found for this user');
     }
 
-    // Verificar que el servicio pertenezca al trabajador.
+    // Solo el trabajador propietario puede modificar el servicio.
     this.servicesRulesService.ensureCanBeModified(service, worker.id);
 
-    // Impedir cambios si existen solicitudes activas.
+    // No se puede modificar mientras existan solicitudes activas.
     await this.ensureServiceHasNoActiveRequests(id);
 
-    // Buscar y asignar una categoría nueva, si fue enviada.
     if (dto.categoryId !== undefined) {
       const category = await this.categoriesRepository.findOneBy({
         id: dto.categoryId,
@@ -146,20 +156,24 @@ export class ServicesService {
         );
       }
 
+      // No permite mover el servicio a una categoría inactiva.
+      if (!category.isActive) {
+        throw new ConflictException(
+          'Cannot assign an inactive category to a service',
+        );
+      }
+
       service.category = category;
     }
 
-    // Actualizar el nombre, si fue enviado.
     if (dto.name !== undefined) {
       service.name = dto.name;
     }
 
-    // Actualizar la descripción, si fue enviada.
     if (dto.description !== undefined) {
       service.description = dto.description;
     }
 
-    // Actualizar el precio, si fue enviado.
     if (dto.price !== undefined) {
       service.price = dto.price;
     }
@@ -168,10 +182,8 @@ export class ServicesService {
   }
 
   async remove(id: string, userId: string): Promise<{ message: string }> {
-    // Buscar el servicio.
     const service = await this.findOne(id);
 
-    // Buscar el perfil del trabajador autenticado.
     const worker = await this.workersRepository.findOne({
       where: {
         user: { id: userId },
@@ -182,12 +194,13 @@ export class ServicesService {
       throw new NotFoundException('Worker profile was not found for this user');
     }
 
-    // Verificar que el servicio pertenezca al trabajador.
+    // Solo el trabajador propietario puede eliminar el servicio.
     this.servicesRulesService.ensureCanBeModified(service, worker.id);
 
-    // Impedir la eliminación si hay solicitudes activas.
+    //  No se puede eliminar si hay solicitudes REQUESTED, ACCEPTED o IN_PROGRESS.
     await this.ensureServiceHasNoActiveRequests(id);
 
+    // Se elimina el servicio pero no la categoría.
     await this.servicesRepository.remove(service);
 
     return {

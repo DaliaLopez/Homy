@@ -6,7 +6,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
 import { CategoryEntity } from '../../categories/entities/category.entity';
+import { WorkerEntity } from '../../workers/entities/worker.entity';
 
 @Entity('services')
 export class ServiceEntity {
@@ -21,6 +23,11 @@ export class ServiceEntity {
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price!: number;
+
+  // Permite saber si el servicio sigue publicado.
+  // Los servicios nuevos estarán activos por defecto.
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive!: boolean;
 
   @ManyToOne(() => CategoryEntity, {
     nullable: false,

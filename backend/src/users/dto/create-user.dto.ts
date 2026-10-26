@@ -1,4 +1,14 @@
-import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+import {
+  IsEmail,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class CreateUserDto {
   @IsString()
@@ -15,7 +25,8 @@ export class CreateUserDto {
   @MinLength(15)
   @MaxLength(128)
   @Matches(/^[a-zA-Z0-9\s-_]+$/, {
-    message: 'The password can only contain letters, numbers, spaces, and hyphens',
+    message:
+      'The password can only contain letters, numbers, spaces, and hyphens',
   })
   password!: string;
 

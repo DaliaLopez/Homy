@@ -8,13 +8,14 @@ import { ServicesRulesService } from './services-rules/services-rules.service';
 import { ServiceEntity } from './entities/service.entity';
 import { CategoryEntity } from '../categories/entities/category.entity';
 import { RequestEntity } from '../requests/entities/request.entity';
+import { WorkerEntity } from '../workers/entities/worker.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       ServiceEntity,
       CategoryEntity,
-      WorkerProfileEntity,
+      WorkerEntity,
       RequestEntity,
     ]),
   ],
