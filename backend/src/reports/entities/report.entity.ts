@@ -28,6 +28,10 @@ export class ReportEntity {
   @JoinColumn({ name: 'reporter_id' })
   reporter!: UserEntity;
 
+  @ManyToOne(() => UserEntity, (user) => user.reportsReceived)
+  @JoinColumn({ name: 'reported_user_id' })
+  reportedUser!: UserEntity;
+
   @Column({ type: 'uuid', name: 'reported_user_id' })
   reportedUserId!: string;
 

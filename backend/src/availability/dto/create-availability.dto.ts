@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { IsIn, IsNotEmpty, IsString, Matches } from 'class-validator';
 
 const DAYS_OF_WEEK = [

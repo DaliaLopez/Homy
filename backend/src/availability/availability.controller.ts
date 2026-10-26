@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
   Body,
   Controller,
@@ -10,6 +8,8 @@ import {
   Post,
   UseGuards,
   Request,
+  ValidationPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 
 import { AvailabilityService } from './availability.service';
@@ -18,49 +18,62 @@ import { UpdateAvailabilityDto } from './dto/update-availability.dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+const requestValidationPipe = new ValidationPipe({
+  transform: true,
+  whitelist: true,
+  forbidNonWhitelisted: true,
+});
+
+type AuthenticatedRequest = { user: { id: string } };
+
 @Controller('availability')
 @UseGuards(JwtAuthGuard)
 export class AvailabilityController {
-  constructor(private readonly availabilityService: AvailabilityService) {}
+  constructor(private readonly availabilityService: AvailabilityService) { }
 
   @Post()
   create(
-    @Request() req: any,
-    @Body() createAvailabilityDto: CreateAvailabilityDto,
+    @Request() req: AuthenticatedRequest,
+    @Body(requestValidationPipe) createAvailabilityDto: CreateAvailabilityDto,
   ) {
     return this.availabilityService.create(req.user.id, createAvailabilityDto);
   }
 
   @Get()
-  findAll(@Request() req: any) {
+  findAll(@Request() req: AuthenticatedRequest) {
     return this.availabilityService.findAll(req.user.id);
   }
 
   @Get('mine')
-  findMine(@Request() req: any) {
+  findMine(@Request() req: AuthenticatedRequest) {
     return this.availabilityService.findAll(req.user.id);
   }
 
+  @Get('worker/:workerId')
+  findByWorker(@Param('workerId', ParseUUIDPipe) workerId: string) {
+    return this.availabilityService.findByWorker(workerId);
+  }
+
   @Get(':id')
-  findOne(@Param('id') id: string, @Request() req: any) {
-    return this.availabilityService.findOne(id, req.user.id);
+  findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: AuthenticatedRequest) {
+    return this.availabilityService.findOne(req.user.id, id);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
-    @Request() req: any,
-    @Body() updateAvailabilityDto: UpdateAvailabilityDto,
+    @Request() req: AuthenticatedRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(requestValidationPipe) updateAvailabilityDto: UpdateAvailabilityDto,
   ) {
     return this.availabilityService.update(
-      id,
       req.user.id,
-      updateAvailabilityDto,
+      id,
+      updateAvailabilityDto
     );
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Request() req: any) {
-    return this.availabilityService.remove(id, req.user.id);
+  remove(@Param('id', ParseUUIDPipe) id: string, @Request() req: AuthenticatedRequest) {
+    return this.availabilityService.remove(req.user.id, id);
   }
 }

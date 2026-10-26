@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportStatusDto } from './dto/update-report-status.dto';
 import { ReportEntity } from './entities/report.entity';
@@ -17,6 +17,10 @@ export class ReportsService {
     ) { }
 
     async create(reporterId: string, dto: CreateReportDto): Promise<ReportEntity> {
+        if (reporterId === dto.reportedUserId) {
+            throw new BadRequestException('You cannot report yourself.');
+        }
+
         const report = this.reportsRepository.create({
             reason: dto.reason,
             description: dto.description,
@@ -26,12 +30,29 @@ export class ReportsService {
             reporter: { id: reporterId } as UserEntity,
         });
 
-        return this.reportsRepository.save(report);
+        try {
+            return await this.reportsRepository.save(report);
+        } catch (error) {
+            if (
+                error instanceof QueryFailedError &&
+                (error.driverError as { code?: string }).code === '23503'
+            ) {
+                throw new NotFoundException('The reported user does not exist.');
+            }
+            throw error;
+        }
     }
 
     findAllByReporter(reporterId: string): Promise<ReportEntity[]> {
         return this.reportsRepository.find({
             where: { reporter: { id: reporterId } },
+            order: { createdAt: 'DESC' },
+        });
+    }
+
+    findAll(): Promise<ReportEntity[]> {
+        return this.reportsRepository.find({
+            relations: ['reporter'],
             order: { createdAt: 'DESC' },
         });
     }
@@ -43,7 +64,7 @@ export class ReportsService {
         });
 
         if (!report) {
-            throw new NotFoundException(`Reporte con ID ${id} no encontrado`);
+            throw new NotFoundException(`Report with ID ${id} not found`);
         }
 
         return report;

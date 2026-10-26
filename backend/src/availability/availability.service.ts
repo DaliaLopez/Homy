@@ -202,6 +202,13 @@ export class AvailabilityService {
     return this.findMine(id, worker.id);
   }
 
+  async findByWorker(workerId: string): Promise<AvailabilityEntity[]> {
+    return this.availabilityRepository.find({
+      where: { worker: { id: workerId } },
+      order: { day: 'ASC', startTime: 'ASC' },
+    });
+  }
+
   async create(
     userId: string,
     dto: CreateAvailabilityDto,

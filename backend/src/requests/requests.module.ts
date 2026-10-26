@@ -9,12 +9,16 @@ import { RequestEntity } from './entities/request.entity';
 import { AuthModule } from '../auth/auth.module';
 
 import { AvailabilityModule } from '../availability/availability.module';
+import { ServicesModule } from '../services/services.module';
+import { WorkersModule } from '../workers/workers.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([RequestEntity]),
     AuthModule,
     AvailabilityModule,
+    ServicesModule,
+    WorkersModule,
   ],
   providers: [RequestsService, RequestsRulesService],
   controllers: [RequestsController],

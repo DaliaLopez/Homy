@@ -12,7 +12,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { VerificationsModule } from './verifications/verifications.module';
 import { ReportsModule } from './reports/reports.module';
 import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [

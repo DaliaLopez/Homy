@@ -53,6 +53,9 @@ describe('UsersServiceTest', () => {
       id: 'uuid-1',
       name: 'Dalia',
       email: 'dalia@example.com',
+      phone: '3001234567',
+      location: 'Cali',
+      role: 'user',
     } as UserEntity;
 
     repositoryMock.findOneBy.mockResolvedValue(userMock);
@@ -76,6 +79,9 @@ describe('UsersServiceTest', () => {
       name: 'Dalia',
       email: 'dalia@test.com',
       password: 'Password123',
+      phone: '3001234567',
+      location: 'Cali',
+      role: 'user',
     };
 
     const createdUser = {
@@ -101,6 +107,9 @@ describe('UsersServiceTest', () => {
       name: 'Dalia',
       email: 'dalia@test.com',
       password: 'Password123',
+      phone: '3001234567',
+      location: 'Cali',
+      role: 'user',
     };
 
     const createdUser = {

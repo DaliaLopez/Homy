@@ -25,11 +25,6 @@ export class CreateRequestDto {
   @MaxLength(255)
   address!: string;
 
-  @IsNumber()
-  @IsPositive()
-  @IsNotEmpty()
-  price!: number;
-
   @IsUUID()
   @IsNotEmpty()
   workerId!: string;

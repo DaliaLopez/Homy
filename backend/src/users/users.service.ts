@@ -40,7 +40,7 @@ export class UsersService {
         error instanceof QueryFailedError &&
         error.driverError.code === '23505'
       ) {
-        throw new ConflictException('El email ya está registrado');
+        throw new ConflictException('The email is already registered');
       }
       throw error;
     }
@@ -55,7 +55,7 @@ export class UsersService {
   async findOne(id: string): Promise<UserEntity> {
     const user = await this.usersRepository.findOneBy({ id });
     if (!user) {
-      throw new NotFoundException(`Usuario con id ${id} no encontrado`);
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
     return user;
   }

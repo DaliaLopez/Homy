@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { IsIn, IsOptional, IsString, Matches } from 'class-validator';
 
 export class UpdateAvailabilityDto {

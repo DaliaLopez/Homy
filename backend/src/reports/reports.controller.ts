@@ -3,6 +3,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportStatusDto } from './dto/update-report-status.dto';
 import { ReportsService } from './reports.service';
+import { AdminGuard } from '../auth/guards/admin.guard';
 
 const requestValidationPipe = new ValidationPipe({
     transform: true,
@@ -28,12 +29,20 @@ export class ReportsController {
         return this.reportsService.findAllByReporter(req.user.id);
     }
 
+    @Get('all')
+    @UseGuards(AdminGuard)
+    findAll() {
+        return this.reportsService.findAll();
+    }
+
     @Get(':id')
+    @UseGuards(AdminGuard)
     findOne(@Param('id', ParseUUIDPipe) id: string) {
         return this.reportsService.findOne(id);
     }
 
     @Patch(':id/status')
+    @UseGuards(AdminGuard)
     updateStatus(
         @Param('id', ParseUUIDPipe) id: string,
         @Body(requestValidationPipe) dto: UpdateReportStatusDto,

@@ -24,6 +24,6 @@ export class UpdateUserDto {
 
     @IsString()
     @IsOptional()
-    @IsIn(['user', 'worker', 'admin'])
+    @IsIn(['user', 'worker'])
     role?: string;
 }

@@ -42,11 +42,6 @@ export class WorkersService {
     });
     const saved = await this.workersRepository.save(worker);
 
-    await this.usersRepository.update(
-      { id: userId, role: 'user' },
-      { role: 'worker' },
-    );
-
     return saved;
   }
 

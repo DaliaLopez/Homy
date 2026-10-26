@@ -57,7 +57,7 @@ describe('WorkersServiceTest', () => {
     service = moduleRef.get(WorkersService);
   });
 
-  it('creates the profile and turns the user into a worker', async () => {
+  it('creates the profile successfully', async () => {
     const createdWorker = { ...dto } as WorkerEntity;
     const savedWorker = { ...createdWorker, id: 'worker-1' };
 
@@ -75,10 +75,6 @@ describe('WorkersServiceTest', () => {
       user: { id: 'user-1' },
     });
     expect(workersRepositoryMock.save).toHaveBeenCalledWith(createdWorker);
-    expect(usersRepositoryMock.update).toHaveBeenCalledWith(
-      { id: 'user-1', role: 'user' },
-      { role: 'worker' },
-    );
     expect(result.id).toEqual('worker-1');
   });
 
