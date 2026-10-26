@@ -31,7 +31,7 @@ import { ReportsModule } from './reports/reports.module';
           password: config.getOrThrow<string>('DB_PASSWORD'),
           database: config.get<string>('DB_DATABASE', 'homy'),
           autoLoadEntities: true,
-          synchronize: config.get<string>('DB_SYNCHRONIZE') === 'true',
+          synchronize: config.get<string>('DB_SYNCHRONIZE') === 'false',
           ssl: isProd ? { rejectUnauthorized: false } : false,
         };
       },
