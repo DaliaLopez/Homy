@@ -67,7 +67,6 @@ export class ServicesService {
       description: dto.description,
       price: dto.price,
 
-      // Guarda la duración enviada por el usuario.
       durationMinutes: dto.durationMinutes,
 
       category,
@@ -106,7 +105,6 @@ export class ServicesService {
     return service;
   }
 
-  // Busca solicitudes activas usando serviceId.
   private async ensureServiceHasNoActiveRequests(
     serviceId: string,
   ): Promise<void> {
@@ -146,10 +144,8 @@ export class ServicesService {
       throw new NotFoundException('Worker profile was not found for this user');
     }
 
-    // Solo el trabajador proprietario puede modificar el servicio.
     this.servicesRulesService.ensureCanBeModified(service, worker.id);
 
-    // No se permite modificar mientras haya solicitudes activas.
     await this.ensureServiceHasNoActiveRequests(id);
 
     if (dto.categoryId !== undefined) {
@@ -184,7 +180,6 @@ export class ServicesService {
       service.price = dto.price;
     }
 
-    // Actualizar la duración cuando venga en el DTO.
     if (dto.durationMinutes !== undefined) {
       service.durationMinutes = dto.durationMinutes;
     }
@@ -207,7 +202,6 @@ export class ServicesService {
 
     this.servicesRulesService.ensureCanBeModified(service, worker.id);
 
-    // No se permite eliminar mientras haya solicitudes activas.
     await this.ensureServiceHasNoActiveRequests(id);
 
     await this.servicesRepository.remove(service);

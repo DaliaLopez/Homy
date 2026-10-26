@@ -9,7 +9,6 @@ import { RequestStatus } from '../../requests/enums/request-status.enum';
 
 @Injectable()
 export class ServicesRulesService {
-  // Verifica que el servicio pertenezca al trabajador.
   ensureCanBeModified(service: ServiceEntity, workerId: string): void {
     if (service.worker.id !== workerId) {
       throw new ForbiddenException(
@@ -18,7 +17,6 @@ export class ServicesRulesService {
     }
   }
 
-  // Impide modificar un servicio que tenga solicitudes activas.
   ensureHasNoActiveRequests(statuses: RequestStatus[]): void {
     const activeStatuses = [
       RequestStatus.REQUESTED,

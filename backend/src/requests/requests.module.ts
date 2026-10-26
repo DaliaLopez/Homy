@@ -14,9 +14,6 @@ import { AvailabilityModule } from '../availability/availability.module';
   imports: [
     TypeOrmModule.forFeature([RequestEntity]),
     AuthModule,
-
-    //Módulo que valida la disponibilidad del trabajador
-    // para que pueda aceptar el servicio solicitado.
     AvailabilityModule,
   ],
   providers: [RequestsService, RequestsRulesService],

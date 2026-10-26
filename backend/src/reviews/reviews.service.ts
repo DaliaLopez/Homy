@@ -43,7 +43,6 @@ export class ReviewsService {
     });
     this.reviewsRulesService.ensureNotAlreadyReviewed(alreadyReviewed);
 
-    // RequestEntity.workerId debe ser el id del perfil profesional (worker_profiles.id)
     const worker = await this.workersService.findOne(request.workerId);
 
     const review = this.reviewsRepository.create({
@@ -58,7 +57,6 @@ export class ReviewsService {
     try {
       saved = await this.reviewsRepository.save(review);
     } catch (error) {
-      // Dos reseñas simultáneas de la misma solicitud: la restricción única lo detiene
       if (
         error instanceof QueryFailedError &&
         (error.driverError as { code?: string }).code === '23505'
@@ -89,7 +87,6 @@ export class ReviewsService {
     });
   }
 
-  // Reseñas que recibió el trabajador autenticado (HU13)
   async findReceived(userId: string): Promise<ReviewEntity[]> {
     const worker = await this.workersService.findMine(userId);
     return this.findByWorker(worker.id);

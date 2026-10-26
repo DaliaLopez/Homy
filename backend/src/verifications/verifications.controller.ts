@@ -28,7 +28,6 @@ const requestValidationPipe = new ValidationPipe({
 export class VerificationsController {
   constructor(private readonly verificationsService: VerificationsService) {}
 
-  // Trabajador: pedir verificación y ver su historial
   @Post()
   request(@Req() req: { user: { id: string } }) {
     return this.verificationsService.request(req.user.id);
@@ -38,8 +37,7 @@ export class VerificationsController {
   findMine(@Req() req: { user: { id: string } }) {
     return this.verificationsService.findMine(req.user.id);
   }
-
-  // Administrador: revisar y decidir
+  
   @Get()
   @UseGuards(AdminGuard)
   findAll(@Query(requestValidationPipe) query: FindVerificationsQueryDto) {

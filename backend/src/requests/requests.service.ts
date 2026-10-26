@@ -66,10 +66,8 @@ export class RequestsService {
   ): Promise<RequestEntity> {
     const request = await this.findOne(id);
 
-    // EXISTENTE: conserva las reglas de transición.
     this.requestsRulesService.ensureCanBeUpdated(request, dto.status);
 
-    // NUEVO: validar la disponibilidad antes de aceptar.
     if (
       dto.status === RequestStatus.ACCEPTED &&
       request.status !== RequestStatus.ACCEPTED
@@ -82,7 +80,6 @@ export class RequestsService {
       );
     }
 
-    // EXISTENTE: guardar el nuevo estado después de las validaciones.
     request.status = dto.status;
 
     return this.requestsRepository.save(request);

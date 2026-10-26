@@ -30,7 +30,6 @@ const categoryValidationPipe = new ValidationPipe({
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
-  // Crear una categoría: solo administrador.
   @Post()
   @UseGuards(AdminGuard)
   create(@Body(categoryValidationPipe) dto: CreateCategoryDto) {
@@ -42,7 +41,6 @@ export class CategoriesController {
     return this.categoriesService.findAll();
   }
 
-  // Consultar una categoría junto con sus servicios.
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoriesService.findOne(id);

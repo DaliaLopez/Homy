@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
   Column,
   CreateDateColumn,
@@ -16,14 +13,14 @@ import { ReviewEntity } from '../../reviews/entities/review.entity';
 import { VerificationEntity } from '../../verifications/entities/verification.entity';
 import { VerificationStatus } from '../../verifications/enums/verification-status.enum';
 import { AvailabilityEntity } from '../../availability/entities/availability.entity';
+import { ServiceEntity } from '../../services/entities/service.entity';
 
 @Entity('worker_profiles')
-@Unique(['user']) // un usuario solo puede tener un perfil profesional
+@Unique(['user'])
 export class WorkerEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  // UserEntity.workers es @OneToMany(worker.user), por eso aquí es ManyToOne
   @ManyToOne(() => UserEntity, (user) => user.workers, {
     nullable: false,
     onDelete: 'CASCADE',
@@ -64,8 +61,9 @@ export class WorkerEntity {
   @OneToMany(() => VerificationEntity, (verification) => verification.worker)
   verifications!: VerificationEntity[];
 
-  // TODO (cuando exista la entidad de Alejandra): @OneToMany(() => ServiceEntity, (s) => s.worker) services
-  // TODO (cuando exista la entidad de Alejandra): @OneToMany(() => AvailabilityEntity, (a) => a.worker) availability
+  @OneToMany(() => ServiceEntity, (service) => service.worker)
+  services!: ServiceEntity[];
+
   @OneToMany(() => AvailabilityEntity, (availability) => availability.worker)
   availability!: AvailabilityEntity[];
 

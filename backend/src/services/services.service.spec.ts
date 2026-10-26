@@ -78,7 +78,7 @@ describe('ServicesServiceTest', () => {
     service = moduleRef.get(ServicesService);
   });
 
-  // Consultar todos los servicios.
+
   it('returns all services', async () => {
     const servicesMock = [
       { id: 'service-1', name: 'Plumbing' },
@@ -96,7 +96,6 @@ describe('ServicesServiceTest', () => {
     });
   });
 
-  // Consultar un servicio por su id.
   it('returns a service when it exists', async () => {
     const serviceMock = { id: 'service-1', name: 'Plumbing' } as ServiceEntity;
 
@@ -113,7 +112,6 @@ describe('ServicesServiceTest', () => {
     );
   });
 
-  // Crear un servicio con duración y categoría activa.
   it('creates a service successfully', async () => {
     const categoryMock = {
       id: 'category-1',
@@ -158,7 +156,6 @@ describe('ServicesServiceTest', () => {
     expect(result).toEqual(createdService);
   });
 
-  // No se puede crear un servicio en una categoría inactiva.
   it('throws ConflictException when the category is inactive', async () => {
     categoryRepositoryMock.findOneBy.mockResolvedValue({
       id: 'category-1',
@@ -180,7 +177,6 @@ describe('ServicesServiceTest', () => {
     expect(workerRepositoryMock.findOne).not.toHaveBeenCalled();
   });
 
-  // Actualizar la duración y otros datos del servicio.
   it('updates a service and checks active requests', async () => {
     const workerMock = { id: 'worker-1' } as WorkerEntity;
 
@@ -218,7 +214,6 @@ describe('ServicesServiceTest', () => {
     expect(result).toEqual(serviceMock);
   });
 
-  // No se permite actualizar si hay solicitudes activas.
   it('throws ConflictException when active requests exist', async () => {
     const workerMock = { id: 'worker-1' } as WorkerEntity;
     const serviceMock = {
@@ -248,7 +243,6 @@ describe('ServicesServiceTest', () => {
     expect(repositoryMock.save).not.toHaveBeenCalled();
   });
 
-  // Eliminar un servicio sin solicitudes activas.
   it('deletes a service successfully', async () => {
     const workerMock = { id: 'worker-1' } as WorkerEntity;
     const serviceMock = {

@@ -32,7 +32,6 @@ export class VerificationEntity {
   @Column({ name: 'verified_at', type: 'timestamp', nullable: true })
   verifiedAt!: Date | null;
 
-  // Administrador que revisó la solicitud (UserEntity.verificationsReviewed)
   @ManyToOne(() => UserEntity, (user) => user.verificationsReviewed, {
     nullable: true,
   })
