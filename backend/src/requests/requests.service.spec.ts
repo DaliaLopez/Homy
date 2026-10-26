@@ -6,6 +6,7 @@ import { RequestsRulesService } from './request-rules/request-rules.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { RequestStatus } from './enums/request-status.enum';
+import { AvailabilityService } from '../availability/availability.service';
 
 describe('RequestsServiceTest', () => {
   let service: RequestsService;
@@ -21,6 +22,10 @@ describe('RequestsServiceTest', () => {
     ensureCanBeUpdated: jest.fn(),
   };
 
+  const availabilityServiceMock = {
+    ensureRequestFitsAvailability: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -34,6 +39,10 @@ describe('RequestsServiceTest', () => {
         {
           provide: RequestsRulesService,
           useValue: requestsRulesServiceMock,
+        },
+        {
+          provide: AvailabilityService,
+          useValue: availabilityServiceMock,
         },
       ],
     }).compile();

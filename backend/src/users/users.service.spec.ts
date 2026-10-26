@@ -8,6 +8,11 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 import * as argon2 from 'argon2';
 
+jest.mock('argon2', () => ({
+  hash: jest.fn<() => Promise<string>>().mockResolvedValue('hashed_password'),
+  argon2id: 2,
+}));
+
 describe('UsersServiceTest', () => {
   let service: UsersService;
 
@@ -73,10 +78,6 @@ describe('UsersServiceTest', () => {
       password: 'Password123',
     };
 
-    jest
-      .spyOn(argon2, 'hash')
-      .mockImplementation(async () => 'hashed_password');
-
     const createdUser = {
       ...dto,
       passwordHash: 'hashed_password',
@@ -101,10 +102,6 @@ describe('UsersServiceTest', () => {
       email: 'dalia@test.com',
       password: 'Password123',
     };
-
-    jest
-      .spyOn(argon2, 'hash')
-      .mockImplementation(async () => 'hashed_password');
 
     const createdUser = {
       ...dto,

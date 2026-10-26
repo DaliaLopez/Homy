@@ -104,7 +104,7 @@ describe('CategoriesService', () => {
 
     categoriesRepositoryMock.find.mockResolvedValue([existingCategory]);
 
-    rulesServiceMock.ensureNameIsAvailable.mockImplementation(() => {
+    rulesServiceMock.ensureNameIsAvailable.mockImplementationOnce(() => {
       throw new ConflictException('A category with this name already exists');
     });
 
@@ -288,7 +288,7 @@ describe('CategoriesService', () => {
       anotherCategory,
     ]);
 
-    rulesServiceMock.ensureNameIsAvailable.mockImplementation(
+    rulesServiceMock.ensureNameIsAvailable.mockImplementationOnce(
       (existingCategory: CategoryEntity | null, categoryId?: string) => {
         if (existingCategory && existingCategory.id !== categoryId) {
           throw new ConflictException(
