@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   IsEmail,
+  IsIn,
+  IsNotEmpty,
   IsString,
   Matches,
   MaxLength,
@@ -20,9 +22,17 @@ export class RegisterDto {
   @IsString()
   @MinLength(15)
   @MaxLength(128)
-  @Matches(/^[a-zA-Z0-9\s-_]+$/, {
+  @Matches(/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/, {
     message:
-      'This field can only contain letters, numbers, spaces, and hyphens',
+      'The password can contain letters, numbers, and special characters, but cannot contain spaces',
   })
   password!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['user', 'worker'], {
+    message: 'Role must be either user or worker',
+  })
+  role!: string;
+
 }

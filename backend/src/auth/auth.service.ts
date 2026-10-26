@@ -29,11 +29,12 @@ export class AuthService {
       name: dto.name,
       email,
       passwordHash,
+      role: dto.role,
     });
 
     try {
       const savedUser = await this.usersRepository.save(user);
-      return { id: savedUser.id, email: savedUser.email };
+      return { id: savedUser.id, email: savedUser.email, role: savedUser.role };
     } catch (error) {
       if (
         error instanceof QueryFailedError &&

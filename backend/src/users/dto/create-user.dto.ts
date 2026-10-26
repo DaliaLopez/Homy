@@ -22,26 +22,27 @@ export class CreateUserDto {
   email!: string;
 
   @IsString()
+  @IsNotEmpty()
   @MinLength(15)
   @MaxLength(128)
-  @Matches(/^[a-zA-Z0-9\s-_]+$/, {
+  @Matches(/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/, {
     message:
-      'The password can only contain letters, numbers, spaces, and hyphens',
+      'The password can contain letters, numbers, and special characters, but cannot contain spaces',
   })
   password!: string;
 
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   @MaxLength(20)
-  phone?: string;
+  phone!: string;
 
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   @MaxLength(255)
-  location?: string;
+  location!: string;
 
   @IsString()
-  @IsOptional()
-  @IsIn(['user', 'worker', 'admin'])
-  role?: string;
+  @IsNotEmpty()
+  @IsIn(['user', 'worker'])
+  role!: string;
 }
