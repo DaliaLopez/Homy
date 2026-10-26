@@ -213,7 +213,7 @@ describe('CategoriesService', () => {
     const result = await service.update('category-1', dto);
 
     expect(rulesServiceMock.ensureNameIsAvailable).toHaveBeenCalledWith(
-      category,
+      null,
       'category-1',
     );
 
@@ -345,7 +345,7 @@ describe('CategoriesService', () => {
     categoriesRepositoryMock.findOne.mockResolvedValue(category);
     servicesRepositoryMock.count.mockResolvedValue(2);
 
-    rulesServiceMock.ensureCategoryIsActive.mockImplementation(() => {});
+    rulesServiceMock.ensureCategoryIsActive.mockImplementation(() => { });
     rulesServiceMock.ensureCategoryHasNoActiveServices.mockImplementation(
       (...args: unknown[]) => {
         const hasActiveServices = args[0] === true;
@@ -386,9 +386,9 @@ describe('CategoriesService', () => {
     categoriesRepositoryMock.findOne.mockResolvedValue(category);
     servicesRepositoryMock.count.mockResolvedValue(0);
 
-    rulesServiceMock.ensureCategoryIsActive.mockImplementation(() => {});
+    rulesServiceMock.ensureCategoryIsActive.mockImplementation(() => { });
     rulesServiceMock.ensureCategoryHasNoActiveServices.mockImplementation(
-      () => {},
+      () => { },
     );
 
     categoriesRepositoryMock.save.mockImplementation(async (entity) => entity);
