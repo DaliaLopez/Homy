@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsPositive,
   IsString,
   IsUUID,
   MaxLength,
+  Min,
   MinLength,
 } from 'class-validator';
 
@@ -26,6 +28,10 @@ export class CreateServiceDto {
   @IsPositive()
   @IsNotEmpty()
   price!: number;
+
+  @IsInt()
+  @Min(1)
+  durationMinutes!: number;
 
   @IsUUID()
   @IsNotEmpty()

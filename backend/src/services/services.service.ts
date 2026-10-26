@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { ServiceEntity } from './entities/service.entity';
 import { CategoryEntity } from '../categories/entities/category.entity';
@@ -14,6 +14,8 @@ import { WorkerEntity } from '../workers/entities/worker.entity';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { ServicesRulesService } from './services-rules/services-rules.service';
+
+import { RequestStatus } from '../requests/enums/request-status.enum';
 
 @Injectable()
 export class ServicesService {
@@ -34,7 +36,6 @@ export class ServicesService {
   ) {}
 
   async create(userId: string, dto: CreateServiceDto): Promise<ServiceEntity> {
-    // Busca la categoría elegida.
     const category = await this.categoriesRepository.findOneBy({
       id: dto.categoryId,
     });
@@ -45,14 +46,12 @@ export class ServicesService {
       );
     }
 
-    // No permite crear servicios en categorías inactivas.
     if (!category.isActive) {
       throw new ConflictException(
         'Cannot create a service in an inactive category',
       );
     }
 
-    // Buscar el perfil del trabajador autenticado.
     const worker = await this.workersRepository.findOne({
       where: {
         user: { id: userId },
@@ -63,11 +62,14 @@ export class ServicesService {
       throw new NotFoundException('Worker profile was not found for this user');
     }
 
-    // Todo servicio se crea activo.
     const service = this.servicesRepository.create({
       name: dto.name,
       description: dto.description,
       price: dto.price,
+
+      // Guarda la duración enviada por el usuario.
+      durationMinutes: dto.durationMinutes,
+
       category,
       worker,
       isActive: true,
@@ -104,13 +106,18 @@ export class ServicesService {
     return service;
   }
 
-  // Comprueba los estados de las solicitudes asociadas al servicio.
+  // Busca solicitudes activas usando serviceId.
   private async ensureServiceHasNoActiveRequests(
     serviceId: string,
   ): Promise<void> {
     const requests = await this.requestsRepository.find({
       where: {
-        service: { id: serviceId },
+        serviceId,
+        status: In([
+          RequestStatus.REQUESTED,
+          RequestStatus.ACCEPTED,
+          RequestStatus.IN_PROGRESS,
+        ]),
       },
       select: {
         status: true,
@@ -139,10 +146,10 @@ export class ServicesService {
       throw new NotFoundException('Worker profile was not found for this user');
     }
 
-    // Solo el trabajador propietario puede modificar el servicio.
+    // Solo el trabajador proprietario puede modificar el servicio.
     this.servicesRulesService.ensureCanBeModified(service, worker.id);
 
-    // No se puede modificar mientras existan solicitudes activas.
+    // No se permite modificar mientras haya solicitudes activas.
     await this.ensureServiceHasNoActiveRequests(id);
 
     if (dto.categoryId !== undefined) {
@@ -156,7 +163,6 @@ export class ServicesService {
         );
       }
 
-      // No permite mover el servicio a una categoría inactiva.
       if (!category.isActive) {
         throw new ConflictException(
           'Cannot assign an inactive category to a service',
@@ -178,6 +184,11 @@ export class ServicesService {
       service.price = dto.price;
     }
 
+    // Actualizar la duración cuando venga en el DTO.
+    if (dto.durationMinutes !== undefined) {
+      service.durationMinutes = dto.durationMinutes;
+    }
+
     return this.servicesRepository.save(service);
   }
 
@@ -194,13 +205,11 @@ export class ServicesService {
       throw new NotFoundException('Worker profile was not found for this user');
     }
 
-    // Solo el trabajador propietario puede eliminar el servicio.
     this.servicesRulesService.ensureCanBeModified(service, worker.id);
 
-    //  No se puede eliminar si hay solicitudes REQUESTED, ACCEPTED o IN_PROGRESS.
+    // No se permite eliminar mientras haya solicitudes activas.
     await this.ensureServiceHasNoActiveRequests(id);
 
-    // Se elimina el servicio pero no la categoría.
     await this.servicesRepository.remove(service);
 
     return {
