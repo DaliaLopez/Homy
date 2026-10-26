@@ -79,7 +79,6 @@ describe('AvailabilityServiceTest', () => {
     expect(service).toBeDefined();
   });
 
-  // Consultar las disponibilidades del trabajador.
   it('returns the worker availabilities', async () => {
     const workerMock = {
       id: 'worker-1',
@@ -107,7 +106,6 @@ describe('AvailabilityServiceTest', () => {
     });
   });
 
-  // No se puede consultar si el usuario no tiene perfil de trabajador.
   it('throws NotFoundException when the worker profile does not exist', async () => {
     workerRepositoryMock.findOne.mockResolvedValue(null);
 
@@ -118,7 +116,6 @@ describe('AvailabilityServiceTest', () => {
     expect(availabilityRepositoryMock.find).not.toHaveBeenCalled();
   });
 
-  // Crear una disponibilidad correctamente.
   it('creates an availability successfully', async () => {
     const workerMock = {
       id: 'worker-1',
@@ -160,7 +157,6 @@ describe('AvailabilityServiceTest', () => {
     expect(result).toEqual(availabilityMock);
   });
 
-  // No se puede consultar una disponibilidad que no existe en el perfil.
   it('throws NotFoundException when the availability does not exist', async () => {
     workerRepositoryMock.findOne.mockResolvedValue({
       id: 'worker-1',
@@ -173,7 +169,6 @@ describe('AvailabilityServiceTest', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  // Eliminar una disponibilidad sin solicitudes que se crucen.
   it('deletes an availability successfully', async () => {
     const workerMock = {
       id: 'worker-1',

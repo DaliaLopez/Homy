@@ -45,7 +45,6 @@ export class AvailabilityRulesService {
     }
   }
 
-  // Impide cambiar o eliminar una franja ocupada.
   ensureHasNoRequests(hasRequests: boolean): void {
     if (hasRequests) {
       throw new ConflictException(
@@ -54,7 +53,6 @@ export class AvailabilityRulesService {
     }
   }
 
-  // Verifica que una solicitud completa quepa en una franja.
   ensureRequestFitsTimeRange(
     requestStart: number,
     requestEnd: number,

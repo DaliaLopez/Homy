@@ -27,7 +27,6 @@ export class ReviewEntity {
   @JoinColumn({ name: 'worker_id' })
   worker!: WorkerEntity;
 
-  // Una sola reseña por solicitud (OneToOne = columna única)
   @OneToOne(() => RequestEntity, { nullable: false })
   @JoinColumn({ name: 'request_id' })
   request!: RequestEntity;

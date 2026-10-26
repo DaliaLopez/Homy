@@ -87,10 +87,8 @@ export class CategoriesService {
   async deactivate(id: string): Promise<{ message: string }> {
     const category = await this.findOne(id);
 
-    // Verifica que la categoría esté activa.
     this.rulesService.ensureCategoryIsActive(category);
 
-    // Cuenta solo los servicios activos de esta categoría.
     const activeServicesCount = await this.servicesRepository.count({
       where: {
         category: { id },
@@ -98,12 +96,10 @@ export class CategoriesService {
       },
     });
 
-    // Si hay uno o más servicios activos, la regla lanza ConflictException.
     this.rulesService.ensureCategoryHasNoActiveServices(
       activeServicesCount > 0,
     );
 
-    // Solo se desactiva cuando no quedan servicios activos dentro de la categoria.
     category.isActive = false;
     await this.categoriesRepository.save(category);
 

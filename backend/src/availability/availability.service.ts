@@ -28,7 +28,6 @@ export class AvailabilityService {
     @InjectRepository(RequestEntity)
     private readonly requestsRepository: Repository<RequestEntity>,
 
-    // Consultar cuánto dura cada servicio.
     @InjectRepository(ServiceEntity)
     private readonly servicesRepository: Repository<ServiceEntity>,
 
@@ -74,14 +73,12 @@ export class AvailabilityService {
     return availability;
   }
 
-  // Convierte una hora HH:mm:ss en segundos desde medianoche.
   private timeToSeconds(time: string): number {
     const [hours, minutes, seconds = '0'] = time.split(':');
 
     return Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds);
   }
 
-  // Convierte el día de JavaScript al nombre que usa la disponibilidad.
   private getDayName(date: Date): string {
     const daysOfWeek: Record<number, string> = {
       0: 'SUNDAY',
@@ -96,7 +93,6 @@ export class AvailabilityService {
     return daysOfWeek[date.getDay()];
   }
 
-  // Comprueba si dos fechas corresponden al mismo día calendario.
   private isSameCalendarDay(first: Date, second: Date): boolean {
     return (
       first.getFullYear() === second.getFullYear() &&
@@ -105,7 +101,6 @@ export class AvailabilityService {
     );
   }
 
-  // Obtiene la duración y calcula el final de una solicitud.
   private async getRequestInterval(
     request: RequestEntity,
   ): Promise<{ start: number; end: number; date: Date }> {
@@ -138,8 +133,6 @@ export class AvailabilityService {
     return { start, end, date };
   }
 
-  // Revisa el intervalo completo de solicitudes ya hechas
-  // antes de modificar o eliminar una disponibilidad.
   private async hasRequestsInAvailability(
     availability: AvailabilityEntity,
     workerId: string,
@@ -166,7 +159,6 @@ export class AvailabilityService {
         continue;
       }
 
-      // Hay cruce si los intervalos comparten tiempo.
       const overlaps =
         interval.start < availabilityEnd && interval.end > availabilityStart;
 
@@ -252,7 +244,6 @@ export class AvailabilityService {
     const worker = await this.findWorkerByUserId(userId);
     const availability = await this.findMine(id, worker.id);
 
-    // No se modifica una franja que tenga solicitudes que se crucen.
     await this.ensureAvailabilityCanChange(availability, worker.id);
 
     const day = dto.day ?? availability.day;
@@ -286,7 +277,6 @@ export class AvailabilityService {
     const worker = await this.findWorkerByUserId(userId);
     const availability = await this.findMine(id, worker.id);
 
-    // No se elimina una franja que tenga solicitudes que se crucen.
     await this.ensureAvailabilityCanChange(availability, worker.id);
 
     await this.availabilityRepository.remove(availability);
@@ -296,7 +286,6 @@ export class AvailabilityService {
     };
   }
 
-  // Se llama desde RequestsService antes de aceptar.
   async ensureRequestFitsAvailability(
     workerId: string,
     serviceId: string,
@@ -342,7 +331,6 @@ export class AvailabilityService {
 
     const dayName = this.getDayName(startDate);
 
-    // Se consultan las franjas del trabajador y se filtra por día.
     const allAvailabilities = await this.availabilityRepository.find({
       where: {
         worker: { id: workerId },
@@ -353,7 +341,6 @@ export class AvailabilityService {
       (availability) => availability.day === dayName,
     );
 
-    // Debe existir una franja que cubra toda la duración del servicio.
     const fitsAvailability = matchingAvailabilities.some((availability) => {
       const availabilityStart = this.timeToSeconds(availability.startTime);
       const availabilityEnd = this.timeToSeconds(availability.endTime);
@@ -367,7 +354,6 @@ export class AvailabilityService {
       );
     }
 
-    // Buscar otras solicitudes activas del mismo trabajador.
     const activeRequests = await this.requestsRepository.find({
       where: {
         workerId,
@@ -380,14 +366,12 @@ export class AvailabilityService {
     });
 
     for (const otherRequest of activeRequests) {
-      // Excluye la solicitud que se está intentando aceptar.
       if (otherRequest.id === requestId) {
         continue;
       }
 
       const otherInterval = await this.getRequestInterval(otherRequest);
 
-      // Dos solicitudes solo entran en conflicto si ocurren el mismo día.
       if (!this.isSameCalendarDay(startDate, otherInterval.date)) {
         continue;
       }

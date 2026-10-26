@@ -27,7 +27,6 @@ const requestValidationPipe = new ValidationPipe({
 export class WorkersController {
   constructor(private readonly workersService: WorkersService) {}
 
-  // Lectura pública: el catálogo de trabajadores se puede ver sin iniciar sesión
   @Get()
   findAll(@Query(requestValidationPipe) query: FindWorkersQueryDto) {
     return this.workersService.findAll(query);

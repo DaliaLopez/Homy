@@ -19,7 +19,6 @@ export class VerificationsService {
     private readonly verificationsRulesService: VerificationsRulesService,
   ) {}
 
-  // El trabajador solicita que revisen su perfil
   async request(userId: string): Promise<VerificationEntity> {
     const worker = await this.workersService.findMine(userId);
 
@@ -46,8 +45,6 @@ export class VerificationsService {
       order: { createdAt: 'DESC' },
     });
   }
-
-  // --- Solo administrador (AdminGuard en el controlador) ---
 
   findAll(query: FindVerificationsQueryDto): Promise<VerificationEntity[]> {
     return this.verificationsRepository.find({
@@ -85,7 +82,6 @@ export class VerificationsService {
 
     const saved = await this.verificationsRepository.save(verification);
 
-    // El estado visible en el perfil público se mantiene sincronizado
     await this.workersService.setVerificationStatus(
       verification.worker.id,
       dto.status,

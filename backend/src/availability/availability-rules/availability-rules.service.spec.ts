@@ -10,7 +10,6 @@ describe('AvailabilityRulesService', () => {
     service = new AvailabilityRulesService();
   });
 
-  // Convierte la hora a segundos para facilitar las comparaciones.
   describe('ensureValidTimeRange', () => {
     it('should not throw when the end time is later than the start time', () => {
       expect(() =>

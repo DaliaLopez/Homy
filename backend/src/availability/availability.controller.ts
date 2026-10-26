@@ -23,7 +23,6 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class AvailabilityController {
   constructor(private readonly availabilityService: AvailabilityService) {}
 
-  // Crear una disponibilidad para el trabajador autenticado
   @Post()
   create(
     @Request() req: any,
@@ -32,25 +31,21 @@ export class AvailabilityController {
     return this.availabilityService.create(req.user.id, createAvailabilityDto);
   }
 
-  // Consultar todas las disponibilidades
   @Get()
   findAll(@Request() req: any) {
     return this.availabilityService.findAll(req.user.id);
   }
 
-  // Consultar las disponibilidades del trabajador autenticado
   @Get('mine')
   findMine(@Request() req: any) {
     return this.availabilityService.findAll(req.user.id);
   }
 
-  // Consultar una disponibilidad por su ID
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req: any) {
     return this.availabilityService.findOne(id, req.user.id);
   }
 
-  // Actualizar una disponibilidad
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -64,7 +59,6 @@ export class AvailabilityController {
     );
   }
 
-  // Eliminar una disponibilidad
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req: any) {
     return this.availabilityService.remove(id, req.user.id);

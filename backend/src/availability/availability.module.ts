@@ -22,7 +22,6 @@ import { ServiceEntity } from '../services/entities/service.entity';
   controllers: [AvailabilityController],
   providers: [AvailabilityService, AvailabilityRulesService],
 
-  // Permite que RequestsModule use AvailabilityService.
   exports: [AvailabilityService],
 })
 export class AvailabilityModule {}

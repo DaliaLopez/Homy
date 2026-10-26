@@ -32,14 +32,12 @@ export class ReviewsController {
     return this.reviewsService.create(req.user.id, dto);
   }
 
-  // Reseñas recibidas por el trabajador autenticado
   @Get('received')
   @UseGuards(JwtAuthGuard)
   findReceived(@Req() req: { user: { id: string } }) {
     return this.reviewsService.findReceived(req.user.id);
   }
 
-  // Lectura pública: cualquiera puede ver las reseñas de un trabajador
   @Get('worker/:workerId')
   findByWorker(@Param('workerId', ParseUUIDPipe) workerId: string) {
     return this.reviewsService.findByWorker(workerId);

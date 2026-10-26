@@ -61,7 +61,6 @@ describe('CategoriesService', () => {
     service = moduleRef.get(CategoriesService);
   });
 
-  // Crear una categoría correctamente.
   it('creates a category successfully', async () => {
     const dto: CreateCategoryDto = {
       name: '  Plumbing  ',
@@ -96,7 +95,6 @@ describe('CategoriesService', () => {
     expect(result).toEqual(createdCategory);
   });
 
-  // Evitar crear una categoría con un nombre duplicado.
   it('throws ConflictException when creating a category with a duplicate name', async () => {
     const existingCategory = {
       id: 'category-1',
@@ -121,7 +119,6 @@ describe('CategoriesService', () => {
     expect(categoriesRepositoryMock.save).not.toHaveBeenCalled();
   });
 
-  // Si no se proporciona una descripción, guardar null.
   it('creates a category with null description when the description is empty', async () => {
     const dto: CreateCategoryDto = {
       name: 'Painting',
@@ -150,7 +147,6 @@ describe('CategoriesService', () => {
     expect(result).toEqual(createdCategory);
   });
 
-  // Consultar las categorías activas ordenadas por nombre.
   it('returns only active categories ordered by name', async () => {
     const categories = [
       { id: 'category-1', name: 'Painting', isActive: true },
@@ -169,7 +165,6 @@ describe('CategoriesService', () => {
     expect(result).toEqual(categories);
   });
 
-  // Consultar una categoría por su id.
   it('returns a category when it exists', async () => {
     const category = {
       id: 'category-1',
@@ -189,7 +184,6 @@ describe('CategoriesService', () => {
     expect(result).toEqual(category);
   });
 
-  // Lanzar NotFoundException si la categoría no existe.
   it('throws NotFoundException when the category does not exist', async () => {
     categoriesRepositoryMock.findOne.mockResolvedValue(null);
 
@@ -198,7 +192,6 @@ describe('CategoriesService', () => {
     );
   });
 
-  // Actualizar el nombre y la descripción de una categoría.
   it('updates the category name and description', async () => {
     const category = {
       id: 'category-1',
@@ -230,7 +223,6 @@ describe('CategoriesService', () => {
     expect(result).toEqual(category);
   });
 
-  // Permitir actualizar la descripción sin cambiar el nombre.
   it('updates only the description when the name is not provided', async () => {
     const category = {
       id: 'category-1',
@@ -255,7 +247,6 @@ describe('CategoriesService', () => {
     expect(result).toEqual(category);
   });
 
-  // Guardar null si la descripción actualizada queda vacía.
   it('sets description to null when the updated description is empty', async () => {
     const category = {
       id: 'category-1',
@@ -276,7 +267,6 @@ describe('CategoriesService', () => {
     expect(result).toEqual(category);
   });
 
-  // Evitar actualizar una categoría con el nombre de otra.
   it('throws ConflictException when updating to another category name', async () => {
     const category = {
       id: 'category-1',
@@ -317,7 +307,6 @@ describe('CategoriesService', () => {
     expect(categoriesRepositoryMock.save).not.toHaveBeenCalled();
   });
 
-  // No desactivar una categoría que ya está inactiva.
   it('throws ConflictException when deactivating an already inactive category', async () => {
     const category = {
       id: 'category-1',
@@ -345,7 +334,6 @@ describe('CategoriesService', () => {
     expect(categoriesRepositoryMock.save).not.toHaveBeenCalled();
   });
 
-  // No desactivar si existen servicios activos en la categoría.
   it('throws ConflictException when the category has active services', async () => {
     const category = {
       id: 'category-1',
@@ -387,7 +375,6 @@ describe('CategoriesService', () => {
     expect(categoriesRepositoryMock.save).not.toHaveBeenCalled();
   });
 
-  // Desactivar correctamente una categoría sin servicios activos.
   it('deactivates a category when it has no active services', async () => {
     const category = {
       id: 'category-1',

@@ -24,12 +24,9 @@ export class ServiceEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price!: number;
 
-  // Permite establecer una duración estimada del servicio en minutos.
   @Column({ name: 'duration_minutes', type: 'int' })
   durationMinutes!: number;
 
-  // Permite saber si el servicio sigue publicado.
-  // Los servicios nuevos estarán activos por defecto.
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
 

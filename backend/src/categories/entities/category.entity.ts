@@ -22,7 +22,7 @@ export class CategoryEntity {
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
-  //Una categoría puede tener muchos servicios.
+
   @OneToMany(() => ServiceEntity, (service) => service.category)
   services!: ServiceEntity[];
 

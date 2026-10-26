@@ -11,12 +11,10 @@ describe('CategoriesRulesService', () => {
     rulesService = new CategoriesRulesService();
   });
 
-  // Permite crear una categoría cuando el nombre está disponible.
   it('does not throw when the category name is available', () => {
     expect(() => rulesService.ensureNameIsAvailable(null)).not.toThrow();
   });
 
-  // Impide crear una categoría con un nombre que ya existe.
   it('throws ConflictException when the category name already exists', () => {
     const existingCategory = {
       id: 'category-1',
@@ -32,7 +30,6 @@ describe('CategoriesRulesService', () => {
     );
   });
 
-  // Permite conservar el nombre de la misma categoría durante una actualización.
   it('does not throw when the existing category has the same id', () => {
     const existingCategory = {
       id: 'category-1',
@@ -44,7 +41,6 @@ describe('CategoriesRulesService', () => {
     ).not.toThrow();
   });
 
-  // Impide usar el nombre de otra categoría durante una actualización.
   it('throws ConflictException when another category uses the name', () => {
     const existingCategory = {
       id: 'category-2',
@@ -60,7 +56,6 @@ describe('CategoriesRulesService', () => {
     ).toThrow('A category with this name already exists');
   });
 
-  // Permite continuar cuando la categoría está activa.
   it('does not throw when the category is active', () => {
     const category = {
       id: 'category-1',
@@ -70,7 +65,6 @@ describe('CategoriesRulesService', () => {
     expect(() => rulesService.ensureCategoryIsActive(category)).not.toThrow();
   });
 
-  // Impide desactivar una categoría que ya está inactiva.
   it('throws ConflictException when the category is already inactive', () => {
     const category = {
       id: 'category-1',
@@ -86,14 +80,12 @@ describe('CategoriesRulesService', () => {
     );
   });
 
-  // Permite desactivar una categoría que no tiene servicios activos.
   it('does not throw when the category has no active services', () => {
     expect(() =>
       rulesService.ensureCategoryHasNoActiveServices(false),
     ).not.toThrow();
   });
 
-  // Impide desactivar una categoría que tiene servicios activos.
   it('throws ConflictException when the category has active services', () => {
     expect(() => rulesService.ensureCategoryHasNoActiveServices(true)).toThrow(
       ConflictException,

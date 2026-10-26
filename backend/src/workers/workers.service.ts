@@ -9,7 +9,6 @@ import { UpdateWorkerDto } from './dto/update-worker.dto';
 import { WorkerEntity } from './entities/worker.entity';
 import { WorkersRulesService } from './worker-rules/workers-rules.service';
 
-// Vista pública: nunca se expone email, teléfono ni hash del usuario (RNF04)
 const PUBLIC_SELECT: FindOptionsSelect<WorkerEntity> = {
   id: true,
   description: true,
@@ -43,7 +42,6 @@ export class WorkersService {
     });
     const saved = await this.workersRepository.save(worker);
 
-    // Quien crea un perfil profesional pasa a ser trabajador (un admin conserva su rol)
     await this.usersRepository.update(
       { id: userId, role: 'user' },
       { role: 'worker' },
@@ -110,8 +108,6 @@ export class WorkersService {
 
     return this.workersRepository.save(worker);
   }
-
-  // --- Métodos para otros módulos (reviews y verifications) ---
 
   async setVerificationStatus(
     workerId: string,
