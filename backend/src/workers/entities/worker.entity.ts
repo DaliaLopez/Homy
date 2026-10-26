@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
   Column,
   CreateDateColumn,
@@ -12,6 +15,7 @@ import { UserEntity } from '../../users/entities/user.entity';
 import { ReviewEntity } from '../../reviews/entities/review.entity';
 import { VerificationEntity } from '../../verifications/entities/verification.entity';
 import { VerificationStatus } from '../../verifications/enums/verification-status.enum';
+import { AvailabilityEntity } from '../../availability/entities/availability.entity';
 
 @Entity('worker_profiles')
 @Unique(['user']) // un usuario solo puede tener un perfil profesional
@@ -62,6 +66,8 @@ export class WorkerEntity {
 
   // TODO (cuando exista la entidad de Alejandra): @OneToMany(() => ServiceEntity, (s) => s.worker) services
   // TODO (cuando exista la entidad de Alejandra): @OneToMany(() => AvailabilityEntity, (a) => a.worker) availability
+  @OneToMany(() => AvailabilityEntity, (availability) => availability.worker)
+  availability!: AvailabilityEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
