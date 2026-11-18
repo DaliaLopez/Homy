@@ -5,10 +5,15 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { UserEntity } from '../../users/entities/user.entity';
 import { WorkerEntity } from '../../workers/entities/worker.entity';
 import { VerificationStatus } from '../enums/verification-status.enum';
+import type {
+  VerificationCategory,
+  VerificationDocument,
+} from './verification-items';
 
 @Entity('verifications')
 export class VerificationEntity {
@@ -29,8 +34,21 @@ export class VerificationEntity {
   })
   status!: VerificationStatus;
 
+  /** initial: primera verificación. category: un trabajador verificado suma un oficio. */
+  @Column({ type: 'varchar', length: 20, default: 'initial' })
+  type!: 'initial' | 'category';
+
+  @Column({ type: 'jsonb', default: () => "'[]'" })
+  documents!: VerificationDocument[];
+
+  @Column({ type: 'jsonb', default: () => "'[]'" })
+  categories!: VerificationCategory[];
+
   @Column({ name: 'verified_at', type: 'timestamp', nullable: true })
   verifiedAt!: Date | null;
+
+  @Column({ name: 'reviewed_at', type: 'timestamp', nullable: true })
+  reviewedAt!: Date | null;
 
   @ManyToOne(() => UserEntity, (user) => user.verificationsReviewed, {
     nullable: true,
@@ -40,4 +58,7 @@ export class VerificationEntity {
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
+
+  @UpdateDateColumn({ name: 'updated_at', nullable: true })
+  updatedAt!: Date;
 }

@@ -7,6 +7,8 @@ import { WorkersService } from './workers.service';
 import { WorkerEntity } from './entities/worker.entity';
 import { WorkersRulesService } from './worker-rules/workers-rules.service';
 import { UserEntity } from '../users/entities/user.entity';
+import { ServiceEntity } from '../services/entities/service.entity';
+import { RequestEntity } from '../requests/entities/request.entity';
 import { VerificationStatus } from '../verifications/enums/verification-status.enum';
 
 describe('WorkersServiceTest', () => {
@@ -46,6 +48,14 @@ describe('WorkersServiceTest', () => {
         {
           provide: getRepositoryToken(UserEntity),
           useValue: usersRepositoryMock,
+        },
+        {
+          provide: getRepositoryToken(ServiceEntity),
+          useValue: { find: jest.fn(() => Promise.resolve([])) },
+        },
+        {
+          provide: getRepositoryToken(RequestEntity),
+          useValue: { createQueryBuilder: jest.fn() },
         },
         {
           provide: WorkersRulesService,

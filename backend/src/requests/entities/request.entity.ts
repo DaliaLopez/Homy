@@ -44,6 +44,24 @@ export class RequestEntity {
   @Column({ type: 'uuid', name: 'service_id' })
   serviceId!: string;
 
+  @Column({
+    name: 'cancellation_reason',
+    type: 'varchar',
+    length: 200,
+    nullable: true,
+  })
+  cancellationReason!: string | null;
+
+  @Column({ name: 'cancellation_note', type: 'text', nullable: true })
+  cancellationNote!: string | null;
+
+  /** client | worker */
+  @Column({ name: 'cancelled_by', type: 'varchar', length: 10, nullable: true })
+  cancelledBy!: string | null;
+
+  @Column({ name: 'cancelled_at', type: 'timestamp', nullable: true })
+  cancelledAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

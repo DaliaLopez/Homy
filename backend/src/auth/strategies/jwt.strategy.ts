@@ -30,10 +30,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
     const user = await this.usersRepository.findOneBy({ id: userId });
 
-    if (!user) {
+    if (!user || user.status === 'suspended') {
       throw new UnauthorizedException();
     }
 
-    return { id: user.id, email: user.email, role: user.role };
+    return { id: user.id, email: user.email, role: user.role, name: user.name };
   }
 }

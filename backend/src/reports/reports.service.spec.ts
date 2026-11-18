@@ -1,13 +1,15 @@
-import { describe, jest, beforeEach, it, expect } from "@jest/globals";
-import { ReportsService } from "./reports.service";
-import { ReportEntity } from "./entities/report.entity";
-import { Test } from "@nestjs/testing";
-import { ReportsRulesService } from "./report-rules/reports-rules.service";
-import { getRepositoryToken } from "@nestjs/typeorm";
-import { NotFoundException } from "@nestjs/common";
-import { ReportStatus } from "./enums/report-status.enum";
+import { describe, jest, beforeEach, it, expect } from '@jest/globals';
+import { ReportsService } from './reports.service';
+import { RequestEntity } from '../requests/entities/request.entity';
+import { ServiceEntity } from '../services/entities/service.entity';
+import { ReportEntity } from './entities/report.entity';
+import { Test } from '@nestjs/testing';
+import { ReportsRulesService } from './report-rules/reports-rules.service';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { NotFoundException } from '@nestjs/common';
+import { ReportStatus } from './enums/report-status.enum';
 
-describe("ReportsServiceTest", () => {
+describe('ReportsServiceTest', () => {
   let service: ReportsService;
 
   const repositoryMock = {
@@ -32,6 +34,14 @@ describe("ReportsServiceTest", () => {
           useValue: repositoryMock,
         },
         {
+          provide: getRepositoryToken(RequestEntity),
+          useValue: { findBy: jest.fn(() => Promise.resolve([])) },
+        },
+        {
+          provide: getRepositoryToken(ServiceEntity),
+          useValue: { findBy: jest.fn(() => Promise.resolve([])) },
+        },
+        {
           provide: ReportsRulesService,
           useValue: reportsRulesServiceMock,
         },
@@ -41,63 +51,74 @@ describe("ReportsServiceTest", () => {
     service = moduleRef.get(ReportsService);
   });
 
-  it("returns a report when the id exists", async () => {
+  it('returns a report when the id exists', async () => {
     const reportMock = {
-      id: "uuid-1",
-      reason: "No llegó",
+      id: 'uuid-1',
+      reason: 'No llegó',
       status: ReportStatus.PENDING,
     } as ReportEntity;
 
     repositoryMock.findOne.mockResolvedValue(reportMock);
 
-    const result = await service.findOne("uuid-1");
+    const result = await service.findOne('uuid-1');
 
     expect(result).toEqual(reportMock);
     expect(repositoryMock.findOne).toHaveBeenCalledWith({
-      where: { id: "uuid-1" },
-      relations: ["reporter"],
+      where: { id: 'uuid-1' },
+      relations: { reporter: true, reportedUser: true },
     });
   });
 
-  it("throws NotFoundException when the report does not exist", async () => {
+  it('throws NotFoundException when the report does not exist', async () => {
     repositoryMock.findOne.mockResolvedValue(null);
-    await expect(service.findOne("uuid-1")).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.findOne('uuid-1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
-  it("creates a report successfully with PENDING status", async () => {
+  it('creates a report successfully with PENDING status', async () => {
     const dto = {
-      reason: "Trabajo mal hecho",
-      description: "Dejó todo sucio y la llave gotea.",
-      reportedUserId: "uuid-worker",
-      requestId: "uuid-request",
+      reason: 'Trabajo mal hecho',
+      description: 'Dejó todo sucio y la llave gotea.',
+      reportedUserId: 'uuid-worker',
+      requestId: 'uuid-request',
     };
 
-    const createdReport = { ...dto, status: ReportStatus.PENDING } as unknown as ReportEntity;
-    const savedReport = { ...createdReport, id: "uuid-1" } as ReportEntity;
+    const createdReport = {
+      ...dto,
+      status: ReportStatus.PENDING,
+    } as unknown as ReportEntity;
+    const savedReport = { ...createdReport, id: 'uuid-1' };
 
     repositoryMock.create.mockReturnValue(createdReport);
     repositoryMock.save.mockResolvedValue(savedReport);
 
-    const result = await service.create("uuid-client", dto);
+    const result = await service.create('uuid-client', dto);
 
     expect(repositoryMock.save).toHaveBeenCalledWith(createdReport);
-    expect(result.id).toEqual("uuid-1");
+    expect(result.id).toEqual('uuid-1');
   });
 
-  it("updates report status and calls rules service", async () => {
+  it('updates report status and calls rules service', async () => {
     const reportMock = {
-      id: "uuid-1",
+      id: 'uuid-1',
       status: ReportStatus.PENDING,
     } as ReportEntity;
 
     const dto = { status: ReportStatus.INVESTIGATING };
 
     repositoryMock.findOne.mockResolvedValue(reportMock);
-    repositoryMock.save.mockResolvedValue({ ...reportMock, status: ReportStatus.INVESTIGATING } as ReportEntity);
+    repositoryMock.save.mockResolvedValue({
+      ...reportMock,
+      status: ReportStatus.INVESTIGATING,
+    });
 
-    const result = await service.updateStatus("uuid-1", dto);
+    const result = await service.updateStatus('uuid-1', dto);
 
-    expect(reportsRulesServiceMock.ensureCanBeUpdated).toHaveBeenCalledWith(reportMock, ReportStatus.INVESTIGATING);
+    expect(reportsRulesServiceMock.ensureCanBeUpdated).toHaveBeenCalledWith(
+      reportMock,
+      ReportStatus.INVESTIGATING,
+    );
     expect(repositoryMock.save).toHaveBeenCalled();
     expect(result.status).toEqual(ReportStatus.INVESTIGATING);
   });

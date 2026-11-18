@@ -201,4 +201,53 @@ describe('AvailabilityServiceTest', () => {
       message: 'Availability deleted successfully.',
     });
   });
+
+  it('splits the day into back-to-back blocks of the service length and marks the taken ones', async () => {
+    // Un lunes futuro: franja 08:00–14:00, servicio de 2 horas y una solicitud a las 10:00.
+    const monday = new Date();
+    monday.setDate(monday.getDate() + ((8 - monday.getDay()) % 7 || 7));
+    const date = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`;
+    const booked = new Date(monday);
+    booked.setHours(10, 0, 0, 0);
+
+    servicesRepositoryMock.findOne.mockResolvedValue({
+      id: 's1',
+      durationMinutes: 120,
+      worker: { id: 'w1' },
+    } as unknown as ServiceEntity);
+    availabilityRepositoryMock.find.mockResolvedValue([
+      { day: 'MONDAY', startTime: '08:00:00', endTime: '14:00:00' },
+    ] as unknown as AvailabilityEntity[]);
+    requestsRepositoryMock.find.mockResolvedValue([
+      { id: 'r1', serviceId: 's1', scheduledAt: booked },
+    ] as unknown as RequestEntity[]);
+
+    const result = await service.getFreeSlots('w1', date, 's1');
+
+    // Bloques 08–10, 10–12 y 12–14: el de 10–12 lo ocupa la solicitud.
+    expect(result.slots).toEqual(['08:00', '12:00']);
+    expect(result.taken).toEqual(['10:00']);
+  });
+
+  it('drops the last block when the service would end after the availability', async () => {
+    // Franja 08:00–13:00 con un servicio de 2 horas: 08–10 y 10–12; de 12 a 13 solo queda 1 hora.
+    const monday = new Date();
+    monday.setDate(monday.getDate() + ((8 - monday.getDay()) % 7 || 7));
+    const date = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`;
+
+    servicesRepositoryMock.findOne.mockResolvedValue({
+      id: 's1',
+      durationMinutes: 120,
+      worker: { id: 'w1' },
+    } as unknown as ServiceEntity);
+    availabilityRepositoryMock.find.mockResolvedValue([
+      { day: 'MONDAY', startTime: '08:00:00', endTime: '13:00:00' },
+    ] as unknown as AvailabilityEntity[]);
+    requestsRepositoryMock.find.mockResolvedValue([]);
+
+    const result = await service.getFreeSlots('w1', date, 's1');
+
+    expect(result.slots).toEqual(['08:00', '10:00']);
+    expect(result.taken).toEqual([]);
+  });
 });

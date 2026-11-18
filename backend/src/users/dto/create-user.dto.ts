@@ -42,6 +42,6 @@ export class CreateUserDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsIn(['user', 'worker'])
+  @IsIn(['user', 'worker', 'admin'])
   role!: string;
 }

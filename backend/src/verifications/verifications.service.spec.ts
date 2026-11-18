@@ -1,173 +1,200 @@
 import { describe, jest, beforeEach, it, expect } from '@jest/globals';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { VerificationsService } from './verifications.service';
 import { VerificationEntity } from './entities/verification.entity';
 import { VerificationStatus } from './enums/verification-status.enum';
 import { VerificationsRulesService } from './verification-rules/verifications-rules.service';
-import { WorkerEntity } from '../workers/entities/worker.entity';
 import { WorkersService } from '../workers/workers.service';
+import { CategoryEntity } from '../categories/entities/category.entity';
+import { UserEntity } from '../users/entities/user.entity';
+
+const file = {
+  name: 'a.jpg',
+  type: 'image/jpeg',
+  size: 10,
+  dataUrl: 'data:image/jpeg;base64,AA',
+};
 
 describe('VerificationsServiceTest', () => {
   let service: VerificationsService;
 
   const repositoryMock = {
-    find: jest.fn<(options: any) => Promise<VerificationEntity[]>>(),
-    findOne: jest.fn<(options: any) => Promise<VerificationEntity | null>>(),
-    exists: jest.fn<(options: any) => Promise<boolean>>(),
-    create: jest.fn<(verification: any) => VerificationEntity>(),
-    save: jest.fn<
-      (verification: VerificationEntity) => Promise<VerificationEntity>
-    >(),
+    find: jest.fn<(options: unknown) => Promise<VerificationEntity[]>>(),
+    findOne:
+      jest.fn<(options: unknown) => Promise<VerificationEntity | null>>(),
+    create: jest.fn((value: unknown) => value as VerificationEntity),
+    save: jest.fn((value: VerificationEntity) => Promise.resolve(value)),
   };
-
+  const categoriesMock = {
+    findBy: jest.fn(() =>
+      Promise.resolve([{ id: 'c1', name: 'Plomería', isActive: true }]),
+    ),
+  };
+  const usersMock = {
+    update: jest.fn((criteria: unknown, changes: unknown) =>
+      Promise.resolve(void [criteria, changes]),
+    ),
+  };
   const workersServiceMock = {
-    findMine: jest.fn<(userId: string) => Promise<WorkerEntity>>(),
+    findMine: jest.fn<(userId: string) => Promise<unknown>>(),
+    create: jest.fn<(userId: string, dto: unknown) => Promise<void>>(),
+    updateMine: jest.fn<(userId: string, dto: unknown) => Promise<void>>(),
     setVerificationStatus:
       jest.fn<
         (workerId: string, status: VerificationStatus) => Promise<void>
       >(),
+    addApprovedCategories:
+      jest.fn<(workerId: string, categories: unknown[]) => Promise<void>>(),
   };
-
-  const verificationsRulesServiceMock = {
-    ensureCanRequest: jest.fn(),
-    ensureCanBeReviewed: jest.fn(),
-  };
-
-  const workerMock = {
-    id: 'worker-1',
-    verificationStatus: VerificationStatus.PENDING,
-  } as WorkerEntity;
 
   beforeEach(async () => {
     jest.clearAllMocks();
-
     const moduleRef = await Test.createTestingModule({
       providers: [
         VerificationsService,
+        VerificationsRulesService,
         {
           provide: getRepositoryToken(VerificationEntity),
           useValue: repositoryMock,
         },
         {
-          provide: WorkersService,
-          useValue: workersServiceMock,
+          provide: getRepositoryToken(CategoryEntity),
+          useValue: categoriesMock,
         },
-        {
-          provide: VerificationsRulesService,
-          useValue: verificationsRulesServiceMock,
-        },
+        { provide: getRepositoryToken(UserEntity), useValue: usersMock },
+        { provide: WorkersService, useValue: workersServiceMock },
       ],
     }).compile();
-
     service = moduleRef.get(VerificationsService);
   });
 
-  it('creates a verification request', async () => {
-    workersServiceMock.findMine.mockResolvedValue(workerMock);
-    repositoryMock.exists.mockResolvedValue(false);
-    repositoryMock.create.mockReturnValue({
+  it('creates the initial verification with its documents and categories', async () => {
+    workersServiceMock.findMine.mockResolvedValue({
+      id: 'w1',
+      verificationStatus: VerificationStatus.PENDING,
+      approvedCategories: [],
+    });
+    repositoryMock.find.mockResolvedValue([]);
+
+    const result = await service.request('u1', {
+      type: 'initial',
+      documents: [
+        { key: 'profile', file },
+        { key: 'id', file },
+        { key: 'selfie', file },
+      ],
+      categories: [{ categoryId: 'c1', note: 'Curso SENA', files: [file] }],
+    });
+
+    expect(result.documents).toHaveLength(3);
+    expect(result.categories[0]).toMatchObject({
+      name: 'Plomería',
+      status: 'pending',
+    });
+    expect(usersMock.update).toHaveBeenCalledWith(
+      { id: 'u1' },
+      { avatarUrl: file.dataUrl },
+    );
+  });
+
+  it('returns an empty history when the worker has no profile yet', async () => {
+    workersServiceMock.findMine.mockRejectedValue(new NotFoundException());
+    await expect(service.findMine('u1')).resolves.toEqual([]);
+  });
+
+  it('approves the profile and its categories when every item is approved', async () => {
+    repositoryMock.findOne.mockResolvedValue({
+      id: 'v1',
+      type: 'initial',
       status: VerificationStatus.PENDING,
-    } as VerificationEntity);
-    repositoryMock.save.mockResolvedValue({
-      id: 'verification-1',
-      status: VerificationStatus.PENDING,
-    } as VerificationEntity);
+      worker: { id: 'w1' },
+      documents: [
+        {
+          key: 'id',
+          label: 'Cédula',
+          status: 'pending',
+          reasons: [],
+          comment: null,
+          file,
+        },
+      ],
+      categories: [
+        {
+          categoryId: 'c1',
+          name: 'Plomería',
+          status: 'pending',
+          reasons: [],
+          comment: null,
+          files: [file],
+          note: null,
+        },
+      ],
+    } as unknown as VerificationEntity);
 
-    const result = await service.request('user-1');
-
-    expect(result.id).toBe('verification-1');
-    expect(repositoryMock.save).toHaveBeenCalled();
-  });
-
-  it('does not create a request when the rules reject it', async () => {
-    workersServiceMock.findMine.mockResolvedValue(workerMock);
-    repositoryMock.exists.mockResolvedValue(true);
-    verificationsRulesServiceMock.ensureCanRequest.mockImplementationOnce(
-      () => {
-        throw new ConflictException();
-      },
-    );
-
-    await expect(service.request('user-1')).rejects.toBeInstanceOf(
-      ConflictException,
-    );
-
-    expect(repositoryMock.save).not.toHaveBeenCalled();
-  });
-
-  it('returns the worker verification history', async () => {
-    const historyMock = [{ id: 'verification-1' }] as VerificationEntity[];
-    workersServiceMock.findMine.mockResolvedValue(workerMock);
-    repositoryMock.find.mockResolvedValue(historyMock);
-
-    const result = await service.findMine('user-1');
-
-    expect(result).toEqual(historyMock);
-  });
-
-  it('returns a verification or throws if it does not exist', async () => {
-    const verificationMock = {
-      id: 'verification-1',
-    } as VerificationEntity;
-
-    repositoryMock.findOne.mockResolvedValue(verificationMock);
-
-    await expect(service.findOne('verification-1')).resolves.toEqual(
-      verificationMock,
-    );
-
-    repositoryMock.findOne.mockResolvedValue(null);
-
-    await expect(service.findOne('verification-1')).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
-  });
-
-  it('approves a verification and updates the worker status', async () => {
-    const verificationMock = {
-      id: 'verification-1',
-      status: VerificationStatus.PENDING,
-      worker: { id: 'worker-1' },
-    } as VerificationEntity;
-
-    repositoryMock.findOne.mockResolvedValue(verificationMock);
-    repositoryMock.save.mockImplementation((verification) =>
-      Promise.resolve(verification),
-    );
-
-    const result = await service.review('verification-1', 'admin-1', {
-      status: VerificationStatus.VERIFIED,
+    const result = await service.review('v1', 'admin', {
+      documents: [{ key: 'id', status: 'approved' }],
+      categories: [{ categoryId: 'c1', status: 'approved' }],
     });
 
     expect(result.status).toBe(VerificationStatus.VERIFIED);
     expect(workersServiceMock.setVerificationStatus).toHaveBeenCalledWith(
-      'worker-1',
+      'w1',
       VerificationStatus.VERIFIED,
+    );
+    expect(workersServiceMock.addApprovedCategories).toHaveBeenCalledWith(
+      'w1',
+      [{ id: 'c1', name: 'Plomería' }],
     );
   });
 
-  it('rejects a verification and updates the worker status', async () => {
-    const verificationMock = {
-      id: 'verification-1',
+  it('asks for corrections when a document is rejected', async () => {
+    repositoryMock.findOne.mockResolvedValue({
+      id: 'v1',
+      type: 'initial',
       status: VerificationStatus.PENDING,
-      worker: { id: 'worker-1' },
-    } as VerificationEntity;
+      worker: { id: 'w1' },
+      documents: [
+        {
+          key: 'id',
+          label: 'Cédula',
+          status: 'pending',
+          reasons: [],
+          comment: null,
+          file,
+        },
+      ],
+      categories: [
+        {
+          categoryId: 'c1',
+          name: 'Plomería',
+          status: 'pending',
+          reasons: [],
+          comment: null,
+          files: [file],
+          note: null,
+        },
+      ],
+    } as unknown as VerificationEntity);
 
-    repositoryMock.findOne.mockResolvedValue(verificationMock);
-    repositoryMock.save.mockImplementation((verification) =>
-      Promise.resolve(verification),
-    );
-
-    const result = await service.review('verification-1', 'admin-1', {
-      status: VerificationStatus.REJECTED,
+    const result = await service.review('v1', 'admin', {
+      documents: [
+        {
+          key: 'id',
+          status: 'rejected',
+          reasons: ['Ilegible o borroso'],
+          comment: 'Sube otra foto',
+        },
+      ],
+      categories: [{ categoryId: 'c1', status: 'approved' }],
     });
 
-    expect(result.status).toBe(VerificationStatus.REJECTED);
-    expect(workersServiceMock.setVerificationStatus).toHaveBeenCalledWith(
-      'worker-1',
-      VerificationStatus.REJECTED,
-    );
+    expect(result.status).toBe(VerificationStatus.CHANGES_REQUESTED);
+    expect(result.documents[0]).toMatchObject({
+      status: 'rejected',
+      reasons: ['Ilegible o borroso'],
+    });
+    expect(workersServiceMock.addApprovedCategories).not.toHaveBeenCalled();
   });
 });

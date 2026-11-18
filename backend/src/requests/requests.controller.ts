@@ -13,6 +13,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestStatusDto } from './dto/update-request.dto';
+import { Roles, RolesGuard } from '../auth/guards/roles.guard';
 import { RequestsService } from './requests.service';
 
 const requestValidationPipe = new ValidationPipe({
@@ -26,9 +27,11 @@ type AuthenticatedRequest = { user: { id: string } };
 @Controller('requests')
 @UseGuards(JwtAuthGuard)
 export class RequestsController {
-  constructor(private readonly requestsService: RequestsService) { }
+  constructor(private readonly requestsService: RequestsService) {}
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles('user')
   create(
     @Req() req: AuthenticatedRequest,
     @Body(requestValidationPipe) dto: CreateRequestDto,
@@ -42,6 +45,8 @@ export class RequestsController {
   }
 
   @Get('received')
+  @UseGuards(RolesGuard)
+  @Roles('worker')
   findAllReceived(@Req() req: AuthenticatedRequest) {
     return this.requestsService.findAllByWorker(req.user.id);
   }

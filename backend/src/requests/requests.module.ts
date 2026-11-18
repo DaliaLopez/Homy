@@ -1,3 +1,4 @@
+import { UserEntity } from '../users/entities/user.entity';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -5,6 +6,9 @@ import { RequestsService } from './requests.service';
 import { RequestsController } from './requests.controller';
 import { RequestsRulesService } from './request-rules/request-rules.service';
 import { RequestEntity } from './entities/request.entity';
+import { ServiceEntity } from '../services/entities/service.entity';
+import { WorkerEntity } from '../workers/entities/worker.entity';
+import { ReviewEntity } from '../reviews/entities/review.entity';
 
 import { AuthModule } from '../auth/auth.module';
 
@@ -14,7 +18,13 @@ import { WorkersModule } from '../workers/workers.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RequestEntity]),
+    TypeOrmModule.forFeature([
+      RequestEntity,
+      ServiceEntity,
+      WorkerEntity,
+      ReviewEntity,
+      UserEntity,
+    ]),
     AuthModule,
     AvailabilityModule,
     ServicesModule,

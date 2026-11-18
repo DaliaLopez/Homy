@@ -55,6 +55,14 @@ export class WorkerEntity {
   })
   averageRating!: number;
 
+  /** Categorías en las que el administrador aprobó la evidencia del trabajador. */
+  @Column({
+    name: 'approved_categories',
+    type: 'jsonb',
+    default: () => "'[]'",
+  })
+  approvedCategories!: { id: string; name: string }[];
+
   @OneToMany(() => ReviewEntity, (review) => review.worker)
   reviews!: ReviewEntity[];
 

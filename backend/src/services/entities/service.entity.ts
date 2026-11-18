@@ -10,6 +10,9 @@ import {
 import { CategoryEntity } from '../../categories/entities/category.entity';
 import { WorkerEntity } from '../../workers/entities/worker.entity';
 
+export type ServiceStatus =
+  'in_review' | 'published' | 'changes_requested' | 'rejected';
+
 @Entity('services')
 export class ServiceEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -29,6 +32,22 @@ export class ServiceEntity {
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
+
+  /**
+   * in_review | published | changes_requested | rejected.
+   * Los servicios existentes antes de la revisión quedan publicados.
+   */
+  @Column({ type: 'varchar', length: 30, default: 'published' })
+  status!: ServiceStatus;
+
+  @Column({ name: 'review_note', type: 'text', nullable: true })
+  reviewNote!: string | null;
+
+  @Column({ name: 'reviewed_at', type: 'timestamp', nullable: true })
+  reviewedAt!: Date | null;
+
+  @Column({ name: 'submitted_at', type: 'timestamp', nullable: true })
+  submittedAt!: Date | null;
 
   @ManyToOne(() => CategoryEntity, {
     nullable: false,

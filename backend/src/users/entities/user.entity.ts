@@ -34,6 +34,20 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 50, default: 'user' })
   role!: string;
 
+  /** active | suspended. Una cuenta suspendida no puede iniciar sesión. */
+  @Column({ type: 'varchar', length: 20, default: 'active' })
+  status!: string;
+
+  @Column({ name: 'suspension_reason', type: 'text', nullable: true })
+  suspensionReason!: string | null;
+
+  @Column({ name: 'suspended_at', type: 'timestamp', nullable: true })
+  suspendedAt!: Date | null;
+
+  /** Foto de perfil comprimida (data URL). */
+  @Column({ name: 'avatar_url', type: 'text', nullable: true })
+  avatarUrl!: string | null;
+
   @OneToMany(() => WorkerEntity, (worker) => worker.user)
   workers!: WorkerEntity[];
 

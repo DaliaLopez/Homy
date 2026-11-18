@@ -4,7 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import { ServiceEntity } from '../services/entities/service.entity';
+import { WorkerEntity } from '../workers/entities/worker.entity';
+import { ReviewEntity } from '../reviews/entities/review.entity';
 
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestStatusDto } from './dto/update-request.dto';
@@ -25,6 +28,14 @@ export class RequestsService {
   constructor(
     @InjectRepository(RequestEntity)
     private readonly requestsRepository: Repository<RequestEntity>,
+    @InjectRepository(ServiceEntity)
+    private readonly servicesRepository: Repository<ServiceEntity>,
+    @InjectRepository(WorkerEntity)
+    private readonly workersRepository: Repository<WorkerEntity>,
+    @InjectRepository(ReviewEntity)
+    private readonly reviewsRepository: Repository<ReviewEntity>,
+    @InjectRepository(UserEntity)
+    private readonly usersRepository: Repository<UserEntity>,
 
     private readonly requestsRulesService: RequestsRulesService,
     private readonly availabilityService: AvailabilityService,
@@ -49,6 +60,22 @@ export class RequestsService {
       scheduledAt,
     });
 
+    // Cliente y trabajador deben estar en la misma ciudad.
+    const client = await this.usersRepository.findOneBy({ id: clientId });
+    this.requestsRulesService.ensureSameCity(
+      client?.location,
+      worker.user.location,
+      'hire',
+    );
+
+    // Se comprueba desde la creación que el horario esté libre y dentro de la disponibilidad.
+    await this.availabilityService.ensureRequestFitsAvailability(
+      worker.id,
+      service.id,
+      scheduledAt,
+      '',
+    );
+
     const request = this.requestsRepository.create({
       description: dto.description,
       scheduledAt,
@@ -63,21 +90,88 @@ export class RequestsService {
     return this.requestsRepository.save(request);
   }
 
-  findAllByClient(clientId: string): Promise<RequestEntity[]> {
-    return this.requestsRepository.find({
-      where: { client: { id: clientId } },
-      order: { createdAt: 'DESC' },
+  /**
+   * Agrega el servicio, el trabajador y si el cliente ya reseñó, para que las
+   * pantallas no tengan que hacer una petición por cada solicitud.
+   */
+  async enrich(requests: RequestEntity[]) {
+    if (requests.length === 0) return [];
+    const serviceIds = [...new Set(requests.map((item) => item.serviceId))];
+    const workerIds = [...new Set(requests.map((item) => item.workerId))];
+    const [services, workers, reviews] = await Promise.all([
+      this.servicesRepository.find({
+        where: { id: In(serviceIds) },
+        relations: { category: true },
+      }),
+      this.workersRepository.find({
+        where: { id: In(workerIds) },
+        relations: { user: true },
+      }),
+      this.reviewsRepository.find({
+        where: { request: { id: In(requests.map((item) => item.id)) } },
+        relations: { request: true },
+      }),
+    ]);
+
+    return requests.map((request) => {
+      const service = services.find((item) => item.id === request.serviceId);
+      const worker = workers.find((item) => item.id === request.workerId);
+      const review = reviews.find((item) => item.request.id === request.id);
+      return {
+        ...request,
+        client: request.client
+          ? {
+              id: request.client.id,
+              name: request.client.name,
+              phone: request.client.phone,
+              location: request.client.location,
+              avatarUrl: request.client.avatarUrl,
+            }
+          : null,
+        service: service
+          ? {
+              id: service.id,
+              name: service.name,
+              durationMinutes: service.durationMinutes,
+              category: service.category
+                ? { id: service.category.id, name: service.category.name }
+                : null,
+            }
+          : null,
+        worker: worker
+          ? {
+              id: worker.id,
+              userId: worker.user.id,
+              name: worker.user.name,
+              phone: worker.user.phone,
+              avatarUrl: worker.user.avatarUrl,
+            }
+          : null,
+        review: review
+          ? { rating: review.rating, comment: review.comment }
+          : null,
+      };
     });
   }
 
-  async findAllByWorker(userId: string): Promise<RequestEntity[]> {
+  async findAllByClient(clientId: string) {
+    const requests = await this.requestsRepository.find({
+      where: { client: { id: clientId } },
+      relations: ['client'],
+      order: { scheduledAt: 'DESC' },
+    });
+    return this.enrich(requests);
+  }
+
+  async findAllByWorker(userId: string) {
     const worker = await this.workersService.findMine(userId);
 
-    return this.requestsRepository.find({
+    const requests = await this.requestsRepository.find({
       where: { workerId: worker.id },
       relations: ['client'],
-      order: { createdAt: 'DESC' },
+      order: { scheduledAt: 'DESC' },
     });
+    return this.enrich(requests);
   }
 
   async findOne(id: string): Promise<RequestEntity> {
@@ -93,18 +187,15 @@ export class RequestsService {
     return request;
   }
 
-  async findOneForUser(id: string, userId: string): Promise<RequestEntity> {
+  async findOneForUser(id: string, userId: string) {
     const request = await this.findOne(id);
     await this.ensureParticipant(request, userId);
 
-    return request;
+    const [detail] = await this.enrich([request]);
+    return detail;
   }
 
-  async updateStatus(
-    id: string,
-    userId: string,
-    dto: UpdateRequestStatusDto,
-  ): Promise<RequestEntity> {
+  async updateStatus(id: string, userId: string, dto: UpdateRequestStatusDto) {
     const request = await this.findOne(id);
     const actor = await this.ensureParticipant(request, userId);
 
@@ -112,6 +203,13 @@ export class RequestsService {
     this.requestsRulesService.ensureActorCanSetStatus(dto.status, actor);
 
     if (dto.status === RequestStatus.ACCEPTED) {
+      // Solo se aceptan solicitudes de clientes de la misma ciudad del trabajador.
+      const worker = await this.workersService.findOne(request.workerId);
+      this.requestsRulesService.ensureSameCity(
+        request.client.location,
+        worker.user.location,
+        'accept',
+      );
       await this.availabilityService.ensureRequestFitsAvailability(
         request.workerId,
         request.serviceId,
@@ -122,7 +220,16 @@ export class RequestsService {
 
     request.status = dto.status;
 
-    return this.requestsRepository.save(request);
+    if (dto.status === RequestStatus.CANCELLED) {
+      request.cancellationReason = dto.reason?.trim() ?? null;
+      request.cancellationNote = dto.note?.trim() ?? null;
+      request.cancelledBy = actor;
+      request.cancelledAt = new Date();
+    }
+
+    await this.requestsRepository.save(request);
+    const [detail] = await this.enrich([request]);
+    return detail;
   }
 
   private async resolveActor(

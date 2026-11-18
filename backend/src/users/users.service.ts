@@ -1,9 +1,11 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { RequestEntity } from '../requests/entities/request.entity';
 import { Repository, QueryFailedError } from 'typeorm';
 import * as argon2 from 'argon2';
 import { UserEntity } from './entities/user.entity';
@@ -16,6 +18,8 @@ export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly usersRepository: Repository<UserEntity>,
+    @InjectRepository(RequestEntity)
+    private readonly requestsRepository: Repository<RequestEntity>,
     private readonly rulesService: UserRulesService,
   ) {}
 
@@ -60,6 +64,15 @@ export class UsersService {
     return user;
   }
 
+  /** Perfil visto por el administrador: incluye cuántas solicitudes ha hecho como cliente. */
+  async findOneForAdmin(id: string) {
+    const user = await this.findOne(id);
+    const requestsCount = await this.requestsRepository.count({
+      where: { client: { id } },
+    });
+    return { ...user, requestsCount };
+  }
+
   async update(id: string, dto: UpdateUserDto): Promise<UserEntity> {
     const user = await this.findOne(id);
 
@@ -81,6 +94,49 @@ export class UsersService {
     if (dto.role) user.role = dto.role;
 
     return this.usersRepository.save(user);
+  }
+
+  async suspend(
+    id: string,
+    adminId: string,
+    reason: string,
+  ): Promise<UserEntity> {
+    const user = await this.findOne(id);
+    this.ensureNotSelfOrAdmin(user, adminId);
+
+    user.status = 'suspended';
+    user.suspensionReason = reason.trim();
+    user.suspendedAt = new Date();
+    return this.usersRepository.save(user);
+  }
+
+  async reactivate(id: string): Promise<UserEntity> {
+    const user = await this.findOne(id);
+    user.status = 'active';
+    user.suspensionReason = null;
+    user.suspendedAt = null;
+    return this.usersRepository.save(user);
+  }
+
+  private ensureNotSelfOrAdmin(user: UserEntity, adminId: string): void {
+    if (user.id === adminId) {
+      throw new BadRequestException(
+        'You cannot suspend or delete your own account.',
+      );
+    }
+    if (user.role === 'admin') {
+      throw new BadRequestException(
+        'Administrator accounts cannot be suspended.',
+      );
+    }
+  }
+
+  async removeAsAdmin(id: string, adminId: string): Promise<void> {
+    const user = await this.findOne(id);
+    if (user.id === adminId) {
+      throw new BadRequestException('You cannot delete your own account.');
+    }
+    await this.usersRepository.remove(user);
   }
 
   async remove(id: string): Promise<void> {

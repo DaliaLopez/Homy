@@ -73,7 +73,6 @@ describe('ServicesServiceTest', () => {
     service = moduleRef.get(ServicesService);
   });
 
-
   it('returns all services', async () => {
     const servicesMock = [
       { id: 'service-1', name: 'Plumbing' },
@@ -86,6 +85,7 @@ describe('ServicesServiceTest', () => {
 
     expect(result).toEqual(servicesMock);
     expect(repositoryMock.find).toHaveBeenCalledWith({
+      where: { status: 'published', isActive: true },
       relations: { category: true, worker: true },
       order: { createdAt: 'DESC' },
     });
@@ -113,7 +113,11 @@ describe('ServicesServiceTest', () => {
       isActive: true,
     } as CategoryEntity;
 
-    const workerMock = { id: 'worker-1' } as WorkerEntity;
+    const workerMock = {
+      id: 'worker-1',
+      verificationStatus: 'verified',
+      approvedCategories: [{ id: 'category-1', name: 'Plomería' }],
+    } as WorkerEntity;
 
     const dto: CreateServiceDto = {
       name: 'Repair a pipe',
@@ -130,7 +134,7 @@ describe('ServicesServiceTest', () => {
       worker: workerMock,
       isActive: true,
       createdAt: new Date(),
-    } as ServiceEntity;
+    } as unknown as ServiceEntity;
 
     categoryRepositoryMock.findOneBy.mockResolvedValue(categoryMock);
     workerRepositoryMock.findOne.mockResolvedValue(workerMock);
@@ -147,6 +151,9 @@ describe('ServicesServiceTest', () => {
       category: categoryMock,
       worker: workerMock,
       isActive: true,
+      status: 'in_review',
+      reviewNote: null,
+      submittedAt: expect.any(Date),
     });
     expect(result).toEqual(createdService);
   });

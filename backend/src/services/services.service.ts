@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -13,6 +14,8 @@ import { WorkerEntity } from '../workers/entities/worker.entity';
 
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { ReviewServiceDto } from './dto/review-service.dto';
+import { VerificationStatus } from '../verifications/enums/verification-status.enum';
 import { ServicesRulesService } from './services-rules/services-rules.service';
 
 import { RequestStatus } from '../requests/enums/request-status.enum';
@@ -62,6 +65,8 @@ export class ServicesService {
       throw new NotFoundException('Worker profile was not found for this user');
     }
 
+    this.ensureCanPublishIn(worker, category.id);
+
     const service = this.servicesRepository.create({
       name: dto.name,
       description: dto.description,
@@ -72,13 +77,91 @@ export class ServicesService {
       category,
       worker,
       isActive: true,
+      // Todo servicio nuevo lo revisa un administrador antes de mostrarse.
+      status: 'in_review',
+      reviewNote: null,
+      submittedAt: new Date(),
     });
 
     return this.servicesRepository.save(service);
   }
 
+  /** Solo puede publicar si está verificado y la categoría fue aprobada. */
+  private ensureCanPublishIn(worker: WorkerEntity, categoryId: string): void {
+    if (worker.verificationStatus !== VerificationStatus.VERIFIED) {
+      throw new ForbiddenException(
+        'Your profile must be verified before publishing services.',
+      );
+    }
+    const approved = worker.approvedCategories ?? [];
+    if (!approved.some((category) => category.id === categoryId)) {
+      throw new ForbiddenException(
+        'You can only publish services in your verified categories.',
+      );
+    }
+  }
+
+  private async findWorkerByUser(userId: string): Promise<WorkerEntity> {
+    const worker = await this.workersRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!worker) {
+      throw new NotFoundException('Worker profile was not found for this user');
+    }
+    return worker;
+  }
+
+  async findMine(userId: string): Promise<ServiceEntity[]> {
+    const worker = await this.findWorkerByUser(userId);
+    return this.servicesRepository.find({
+      where: { worker: { id: worker.id } },
+      relations: { category: true },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  findPublishedByWorker(workerId: string): Promise<ServiceEntity[]> {
+    return this.servicesRepository.find({
+      where: { worker: { id: workerId }, status: 'published', isActive: true },
+      relations: { category: true },
+      order: { price: 'ASC' },
+    });
+  }
+
+  findForReview(status?: string): Promise<ServiceEntity[]> {
+    return this.servicesRepository.find({
+      where: status ? { status: status as ServiceEntity['status'] } : {},
+      relations: { category: true, worker: { user: true } },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findOneForReview(id: string): Promise<ServiceEntity> {
+    const service = await this.servicesRepository.findOne({
+      where: { id },
+      relations: { category: true, worker: { user: true } },
+    });
+    if (!service) {
+      throw new NotFoundException(`Service with id ${id} was not found`);
+    }
+    return service;
+  }
+
+  async review(id: string, dto: ReviewServiceDto): Promise<ServiceEntity> {
+    const service = await this.findOneForReview(id);
+    if (service.status !== 'in_review') {
+      throw new ConflictException('Only services in review can be reviewed.');
+    }
+    service.status = dto.status;
+    service.reviewNote = dto.note?.trim() || null;
+    service.reviewedAt = new Date();
+    return this.servicesRepository.save(service);
+  }
+
+  /** Catálogo público: solo servicios aprobados y activos. */
   findAll(): Promise<ServiceEntity[]> {
     return this.servicesRepository.find({
+      where: { status: 'published', isActive: true },
       relations: {
         category: true,
         worker: true,
@@ -148,7 +231,12 @@ export class ServicesService {
 
     await this.ensureServiceHasNoActiveRequests(id);
 
+    if (service.status === 'rejected') {
+      throw new ConflictException('A rejected service cannot be edited.');
+    }
+
     if (dto.categoryId !== undefined) {
+      this.ensureCanPublishIn(worker, dto.categoryId);
       const category = await this.categoriesRepository.findOneBy({
         id: dto.categoryId,
       });
@@ -183,6 +271,11 @@ export class ServicesService {
     if (dto.durationMinutes !== undefined) {
       service.durationMinutes = dto.durationMinutes;
     }
+
+    // Cualquier cambio vuelve a pasar por la revisión del administrador.
+    service.status = 'in_review';
+    service.reviewNote = null;
+    service.submittedAt = new Date();
 
     return this.servicesRepository.save(service);
   }

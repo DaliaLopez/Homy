@@ -10,7 +10,9 @@ import {
   Request,
   ValidationPipe,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
+import { Roles, RolesGuard } from '../auth/guards/roles.guard';
 
 import { AvailabilityService } from './availability.service';
 import { CreateAvailabilityDto } from './dto/create-availability.dto';
@@ -27,11 +29,12 @@ const requestValidationPipe = new ValidationPipe({
 type AuthenticatedRequest = { user: { id: string } };
 
 @Controller('availability')
-@UseGuards(JwtAuthGuard)
 export class AvailabilityController {
-  constructor(private readonly availabilityService: AvailabilityService) { }
+  constructor(private readonly availabilityService: AvailabilityService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('worker')
   create(
     @Request() req: AuthenticatedRequest,
     @Body(requestValidationPipe) createAvailabilityDto: CreateAvailabilityDto,
@@ -40,26 +43,47 @@ export class AvailabilityController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('worker')
   findAll(@Request() req: AuthenticatedRequest) {
     return this.availabilityService.findAll(req.user.id);
   }
 
   @Get('mine')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('worker')
   findMine(@Request() req: AuthenticatedRequest) {
     return this.availabilityService.findAll(req.user.id);
   }
 
+  // Públicos: el perfil del profesional y la contratación muestran sus horarios.
   @Get('worker/:workerId')
   findByWorker(@Param('workerId', ParseUUIDPipe) workerId: string) {
     return this.availabilityService.findByWorker(workerId);
   }
 
+  @Get('worker/:workerId/slots')
+  findSlots(
+    @Param('workerId', ParseUUIDPipe) workerId: string,
+    @Query('date') date: string,
+    @Query('serviceId', ParseUUIDPipe) serviceId: string,
+  ) {
+    return this.availabilityService.getFreeSlots(workerId, date, serviceId);
+  }
+
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: AuthenticatedRequest) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('worker')
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.availabilityService.findOne(req.user.id, id);
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('worker')
   update(
     @Request() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,
@@ -68,12 +92,17 @@ export class AvailabilityController {
     return this.availabilityService.update(
       req.user.id,
       id,
-      updateAvailabilityDto
+      updateAvailabilityDto,
     );
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string, @Request() req: AuthenticatedRequest) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('worker')
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.availabilityService.remove(req.user.id, id);
   }
 }

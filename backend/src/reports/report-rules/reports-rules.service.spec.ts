@@ -25,10 +25,17 @@ describe('ReportsRulesServiceTest', () => {
     ).toThrow(ConflictException);
   });
 
-  it('throws ConflictException if trying to jump directly to RESOLVED from PENDING', () => {
+  it('allows the admin to resolve a pending report directly', () => {
     const report = { status: ReportStatus.PENDING } as ReportEntity;
     expect(() =>
       rulesService.ensureCanBeUpdated(report, ReportStatus.RESOLVED),
+    ).not.toThrow();
+  });
+
+  it('throws ConflictException when moving a report back to PENDING', () => {
+    const report = { status: ReportStatus.INVESTIGATING } as ReportEntity;
+    expect(() =>
+      rulesService.ensureCanBeUpdated(report, ReportStatus.PENDING),
     ).toThrow(ConflictException);
   });
 

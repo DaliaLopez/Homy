@@ -68,6 +68,7 @@ describe('CategoriesService', () => {
       id: 'category-1',
       name: 'Plumbing',
       description: 'Plumbing services',
+      imageUrl: null,
       isActive: true,
     } as CategoryEntity;
 
@@ -84,6 +85,7 @@ describe('CategoriesService', () => {
     expect(categoriesRepositoryMock.create).toHaveBeenCalledWith({
       name: 'Plumbing',
       description: 'Plumbing services',
+      imageUrl: null,
       isActive: true,
     });
 
@@ -126,6 +128,7 @@ describe('CategoriesService', () => {
       id: 'category-2',
       name: 'Painting',
       description: null,
+      imageUrl: null,
       isActive: true,
     } as CategoryEntity;
 
@@ -138,6 +141,7 @@ describe('CategoriesService', () => {
     expect(categoriesRepositoryMock.create).toHaveBeenCalledWith({
       name: 'Painting',
       description: null,
+      imageUrl: null,
       isActive: true,
     });
 
@@ -194,6 +198,7 @@ describe('CategoriesService', () => {
       id: 'category-1',
       name: 'Plumbing',
       description: 'Old description',
+      imageUrl: null,
       isActive: true,
       services: [],
     } as unknown as CategoryEntity;
@@ -225,6 +230,7 @@ describe('CategoriesService', () => {
       id: 'category-1',
       name: 'Plumbing',
       description: 'Old description',
+      imageUrl: null,
       isActive: true,
       services: [],
     } as unknown as CategoryEntity;
@@ -249,6 +255,7 @@ describe('CategoriesService', () => {
       id: 'category-1',
       name: 'Plumbing',
       description: 'Old description',
+      imageUrl: null,
       isActive: true,
       services: [],
     } as unknown as CategoryEntity;
@@ -269,6 +276,7 @@ describe('CategoriesService', () => {
       id: 'category-1',
       name: 'Plumbing',
       description: 'Description',
+      imageUrl: null,
       isActive: true,
       services: [],
     } as unknown as CategoryEntity;
@@ -342,7 +350,7 @@ describe('CategoriesService', () => {
     categoriesRepositoryMock.findOne.mockResolvedValue(category);
     servicesRepositoryMock.count.mockResolvedValue(2);
 
-    rulesServiceMock.ensureCategoryIsActive.mockImplementation(() => { });
+    rulesServiceMock.ensureCategoryIsActive.mockImplementation(() => {});
     rulesServiceMock.ensureCategoryHasNoActiveServices.mockImplementation(
       (...args: unknown[]) => {
         const hasActiveServices = args[0] === true;
@@ -383,9 +391,9 @@ describe('CategoriesService', () => {
     categoriesRepositoryMock.findOne.mockResolvedValue(category);
     servicesRepositoryMock.count.mockResolvedValue(0);
 
-    rulesServiceMock.ensureCategoryIsActive.mockImplementation(() => { });
+    rulesServiceMock.ensureCategoryIsActive.mockImplementation(() => {});
     rulesServiceMock.ensureCategoryHasNoActiveServices.mockImplementation(
-      () => { },
+      () => {},
     );
 
     categoriesRepositoryMock.save.mockImplementation(async (entity) => entity);

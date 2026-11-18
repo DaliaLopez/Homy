@@ -33,7 +33,7 @@ El sistema usa una arquitectura cliente-servidor. El cliente se comunica con el 
 Usuario
    |
    v
-Cliente (frontend)
+Cliente (frontend Next.js)
    |
    |  HTTP / API REST
    v
@@ -107,8 +107,9 @@ El diagrama completo del modelo está en `docs/database.png` [COMPLETAR: ruta de
   ```
 
 - **Autorización:** se verifica siempre en el backend.
-  - `JwtAuthGuard` exige un token válido.
+  - `JwtAuthGuard` exige un token válido. Una cuenta suspendida no puede iniciar sesión (403) y su token deja de servir (401).
   - `AdminGuard` restringe las rutas al rol `admin`.
+  - `RolesGuard` con `@Roles('user' | 'worker')` restringe las rutas de cliente y de trabajador (por ejemplo, solo un cliente crea solicitudes y solo un trabajador publica servicios).
   - Además del rol, los servicios comprueban que cada persona solo modifique lo que le corresponde (por ejemplo, solo el cliente de una solicitud puede reseñarla).
 - **Validación:** los datos de entrada se validan con DTOs y `ValidationPipe` (se descartan los campos no permitidos).
 - **Errores:** se responde con códigos HTTP consistentes: 400 (datos inválidos), 401 (sin autenticar), 403 (sin permiso), 404 (no existe) y 409 (conflicto con una regla de negocio).
@@ -118,47 +119,68 @@ El diagrama completo del modelo está en `docs/database.png` [COMPLETAR: ruta de
 - Un usuario solo puede tener un perfil profesional; al crearlo pasa a ser trabajador.
 - Las solicitudes siguen un flujo de estados definido.
 - Solo se puede reseñar una solicitud completada, solo el cliente que la hizo y una sola vez. Al crear la reseña se recalcula la calificación promedio del trabajador.
-- Un trabajador solo puede tener una solicitud de verificación pendiente a la vez.
-- Solo el administrador puede aprobar o rechazar una verificación, y una verificación ya revisada no se puede modificar. El resultado se refleja en el perfil del trabajador.
+- **Verificación por elemento:** la verificación inicial lleva tres documentos (foto de perfil, cédula y foto con la cédula) y una o más categorías con su evidencia. El administrador aprueba o rechaza cada elemento con motivos y comentario. Si rechaza algo, la verificación queda en `changes_requested` y el trabajador reenvía solo lo rechazado. Un trabajador verificado puede pedir categorías nuevas (`type: "category"`).
+- **Publicación de servicios:** solo un trabajador verificado publica, y solo en sus categorías aprobadas. Todo servicio nuevo o editado queda `in_review` hasta que el administrador lo publique, pida cambios o lo rechace. El catálogo público solo muestra servicios `published`.
+- **Agenda en horas enteras:** la duración de un servicio se redondea hacia arriba a horas completas. Un servicio de 2 horas agendado a las 08:00 bloquea de 08:00 a 10:00. Al crear y al aceptar una solicitud se comprueba que quepa en la disponibilidad y que no se cruce con otra activa; `GET /availability/worker/:id/slots` devuelve solo las horas libres.
+- **Cancelación:** cancelar exige un motivo y una nota de al menos 10 caracteres; se guarda quién canceló y cuándo.
+- **Reportes:** se adjunta evidencia; la persona reportada puede dar su versión con evidencia; el administrador cierra el caso (resuelto o descartado) con lo que se hizo y una nota para las dos partes.
+- **Suspensión:** suspender cambia el estado de la cuenta a `suspended` con un motivo, sin borrar el registro; se puede reactivar.
+- Los archivos (documentos, evidencias, fotos e imágenes de categorías) viajan como data URLs; el frontend comprime las imágenes antes de enviarlas y el límite del cuerpo JSON es de 25 MB.
 - Los perfiles públicos no muestran correo ni teléfono.
 
 ## Endpoints
 
-Acceso: **Público** (sin token), **JWT** (usuario autenticado) o **Admin** (rol administrador).
+Acceso: **Público** (sin token), **JWT** (cualquier usuario autenticado), **Cliente**, **Trabajador** o **Admin**.
 
 | Método | Ruta | Acceso | Descripción |
 |---|---|---|---|
-| POST | /auth/register | Público | Registrar una cuenta |
-| POST | /auth/login | Público | Iniciar sesión y obtener el token |
-| GET | /auth/me | JWT | Datos del usuario autenticado |
-| POST | /users | JWT | Crear un usuario |
-| GET | /users | JWT | Listar usuarios |
-| GET | /users/:id | JWT | Consultar un usuario |
-| PATCH | /users/:id | JWT | Actualizar un usuario |
-| DELETE | /users/:id | JWT | Eliminar un usuario |
-| GET | /workers | Público | Listar trabajadores (filtros `minRating`, `verificationStatus`, `limit`) |
-| GET | /workers/:id | Público | Perfil de un trabajador |
-| GET | /workers/me | JWT | Perfil profesional propio |
-| POST | /workers | JWT | Crear el perfil profesional |
-| PATCH | /workers/me | JWT | Actualizar el perfil profesional propio |
-| POST | /requests | JWT | Crear una solicitud de servicio |
-| GET | /requests | JWT | Listar solicitudes |
-| GET | /requests/:id | JWT | Consultar una solicitud |
-| PATCH | /requests/:id/status | JWT | Cambiar el estado de una solicitud |
+| POST | /auth/register | Público | Registrar una cuenta (cliente o trabajador) |
+| POST | /auth/login | Público | Iniciar sesión; devuelve el token y el usuario con su rol |
+| GET | /auth/me | JWT | Usuario autenticado (id, correo, rol, nombre) |
+| GET / PATCH | /auth/profile | JWT | Perfil propio (nombre, celular, ubicación, foto) |
+| GET / POST | /users | Admin | Listar o crear usuarios (incluye administradores) |
+| GET / PATCH / DELETE | /users/:id | Admin | Consultar, actualizar o eliminar un usuario |
+| PATCH | /users/:id/suspend | Admin | Suspender con motivo (no borra la cuenta) |
+| PATCH | /users/:id/reactivate | Admin | Reactivar una cuenta suspendida |
+| GET | /workers | Público | Trabajadores con servicios publicados, precio mínimo y servicios completados |
+| GET | /workers/:id | Público | Perfil público de un trabajador |
+| GET / PATCH | /workers/me | Trabajador | Perfil profesional propio |
+| GET | /categories | Público | Categorías activas |
+| GET | /categories/all | Admin | Todas las categorías con su número de servicios |
+| POST / PATCH | /categories, /categories/:id | Admin | Crear o editar (nombre, descripción, imagen) |
+| PATCH | /categories/:id/activate, /deactivate | Admin | Activar o desactivar |
+| GET | /services | Público | Servicios publicados |
+| GET | /services/worker/:workerId | Público | Servicios publicados de un trabajador |
+| GET | /services/mine | Trabajador | Servicios propios con su estado de revisión |
+| POST | /services | Trabajador | Publicar (queda en revisión) |
+| PATCH / DELETE | /services/:id | Trabajador | Editar (vuelve a revisión) o eliminar |
+| GET | /services/review, /services/review/:id | Admin | Servicios para revisar (filtro `status`) |
+| PATCH | /services/:id/review | Admin | Publicar, pedir cambios o rechazar con nota |
+| GET | /availability/worker/:workerId | Público | Franjas de disponibilidad de un trabajador |
+| GET | /availability/worker/:workerId/slots | Público | Horas libres para un servicio (`date`, `serviceId`) |
+| GET / POST | /availability, /availability/mine | Trabajador | Franjas propias |
+| PATCH / DELETE | /availability/:id | Trabajador | Cambiar o quitar una franja |
+| POST | /requests | Cliente | Crear una solicitud (valida disponibilidad) |
+| GET | /requests | JWT | Solicitudes del cliente, con servicio, trabajador y reseña |
+| GET | /requests/received | Trabajador | Solicitudes recibidas |
+| GET | /requests/:id | JWT | Una solicitud (solo sus participantes) |
+| PATCH | /requests/:id/status | JWT | Cambiar el estado (al cancelar: `reason` y `note`) |
 | POST | /reviews | JWT | Reseñar una solicitud completada |
 | GET | /reviews/received | JWT | Reseñas recibidas por el trabajador autenticado |
 | GET | /reviews/worker/:workerId | Público | Reseñas de un trabajador |
-| POST | /verifications | JWT | Solicitar la verificación del perfil |
-| GET | /verifications/me | JWT | Historial de verificaciones propias |
-| GET | /verifications | Admin | Listar verificaciones (filtro `status`) |
-| GET | /verifications/:id | Admin | Consultar una verificación |
-| PATCH | /verifications/:id/review | Admin | Aprobar o rechazar una verificación |
-| POST | /reports | JWT | Crear un reporte |
-| GET | /reports | JWT | Listar reportes |
-| GET | /reports/:id | JWT | Consultar un reporte |
-| PATCH | /reports/:id/status | JWT | Actualizar el estado de un reporte |
-
-[COMPLETAR: endpoints de services, categories y availability cuando se integren.]
+| POST | /verifications | Trabajador | Enviar verificación inicial o de una categoría nueva |
+| GET | /verifications/me | Trabajador | Historial propio |
+| PATCH | /verifications/:id/resubmit | Trabajador | Reenviar los elementos rechazados |
+| GET | /verifications | Admin | Listar (filtro `status`; sin el contenido de los archivos) |
+| GET | /verifications/:id | Admin | Detalle con los archivos |
+| PATCH | /verifications/:id/review | Admin | Decidir cada documento y categoría |
+| POST | /reports | JWT | Crear un reporte con evidencia |
+| GET | /reports | JWT | Reportes hechos por mí |
+| GET | /reports/received | JWT | Reportes en mi contra |
+| GET | /reports/:id | JWT | Detalle (participantes o admin) |
+| PATCH | /reports/:id/response | JWT | Versión de la persona reportada |
+| GET | /reports/all | Admin | Todos los reportes |
+| PATCH | /reports/:id/status | Admin | Resolver o descartar con acciones y nota |
 
 ## Variables de entorno
 
@@ -175,6 +197,7 @@ Se configuran en un archivo `.env` dentro de `backend/`. El archivo `.env.exampl
 | DB_DATABASE | Nombre de la base de datos | homy |
 | DB_SYNC | Sincronizar las tablas automáticamente (`true` solo en desarrollo) | true |
 | JWT_SECRET | Clave para firmar los tokens (mínimo 64 caracteres) | (cadena aleatoria) |
+| FRONTEND_URL | Origen(es) del frontend Next.js permitidos por CORS, separados por coma | http://localhost:3001 |
 
 Para generar un `JWT_SECRET` válido:
 
@@ -261,7 +284,9 @@ El token de cada rol se guarda automáticamente al iniciar sesión y se usa en l
 
 ## Despliegue
 
-URL del backend desplegado: [COMPLETAR: URL]
+URL del backend desplegado: https://homy-backend-qph1.onrender.com (sin prefijo `/api`).
+
+Con `DB_SYNCHRONIZE=false` en Render, TypeORM sincroniza el esquema al arrancar (la condición en `app.module.ts` está invertida), así que las columnas nuevas se crean al desplegar. Todas son opcionales o tienen valor por defecto, y los servicios que ya existían quedan como `published`.
 
 ## Credenciales de demostración
 
@@ -283,6 +308,6 @@ Homy/
 │   ├── compose.yaml      Servicios de desarrollo (PostgreSQL)
 │   ├── .env.example      Variables de entorno documentadas
 │   └── package.json
-├── frontend/
+├── frontend/          Next.js (App Router), corre en http://localhost:3001
 └── README.md
 ```

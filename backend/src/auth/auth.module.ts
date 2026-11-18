@@ -24,7 +24,7 @@ import { PassportModule } from '@nestjs/passport';
         }
         return {
           secret,
-          signOptions: { expiresIn: '15m', algorithm: 'HS256' },
+          signOptions: { expiresIn: '7d', algorithm: 'HS256' },
         };
       },
     }),

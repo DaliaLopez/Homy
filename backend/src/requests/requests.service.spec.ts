@@ -4,6 +4,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
 import { RequestsService } from './requests.service';
+import { ReviewEntity } from '../reviews/entities/review.entity';
+import { UserEntity } from '../users/entities/user.entity';
 import { RequestEntity } from './entities/request.entity';
 import { RequestsRulesService } from './request-rules/request-rules.service';
 import { RequestStatus } from './enums/request-status.enum';
@@ -23,7 +25,12 @@ describe('RequestsServiceTest', () => {
     save: jest.fn<(request: RequestEntity) => Promise<RequestEntity>>(),
   };
 
+  const usersRepositoryMock = {
+    findOneBy: jest.fn<(where: any) => Promise<UserEntity | null>>(),
+  };
+
   const requestsRulesServiceMock = {
+    ensureSameCity: jest.fn(),
     ensureCanBeCreated: jest.fn(),
     ensureCanBeUpdated: jest.fn(),
     ensureActorCanSetStatus: jest.fn(),
@@ -58,7 +65,26 @@ describe('RequestsServiceTest', () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         RequestsService,
-        { provide: getRepositoryToken(RequestEntity), useValue: repositoryMock },
+        {
+          provide: getRepositoryToken(RequestEntity),
+          useValue: repositoryMock,
+        },
+        {
+          provide: getRepositoryToken(ServiceEntity),
+          useValue: { find: jest.fn(() => Promise.resolve([])) },
+        },
+        {
+          provide: getRepositoryToken(WorkerEntity),
+          useValue: { find: jest.fn(() => Promise.resolve([])) },
+        },
+        {
+          provide: getRepositoryToken(UserEntity),
+          useValue: usersRepositoryMock,
+        },
+        {
+          provide: getRepositoryToken(ReviewEntity),
+          useValue: { find: jest.fn(() => Promise.resolve([])) },
+        },
         { provide: RequestsRulesService, useValue: requestsRulesServiceMock },
         { provide: AvailabilityService, useValue: availabilityServiceMock },
         { provide: WorkersService, useValue: workersServiceMock },
@@ -93,8 +119,12 @@ describe('RequestsServiceTest', () => {
   it('creates a request using the price of the service', async () => {
     workersServiceMock.findOne.mockResolvedValue({
       id: 'worker-1',
-      user: { id: 'user-worker' },
+      user: { id: 'user-worker', location: 'Cali, Valle del Cauca' },
     } as unknown as WorkerEntity);
+    usersRepositoryMock.findOneBy.mockResolvedValue({
+      id: 'user-client',
+      location: 'Cali, Valle del Cauca',
+    } as UserEntity);
     servicesServiceMock.findOne.mockResolvedValue({
       id: 'service-1',
       price: 150000,
@@ -107,7 +137,7 @@ describe('RequestsServiceTest', () => {
     repositoryMock.save.mockResolvedValue({
       ...createdRequest,
       id: 'uuid-1',
-    } as RequestEntity);
+    });
 
     const result = await service.create('user-client', {
       description: 'Pintar pared',
@@ -118,6 +148,11 @@ describe('RequestsServiceTest', () => {
     });
 
     expect(requestsRulesServiceMock.ensureCanBeCreated).toHaveBeenCalled();
+    expect(requestsRulesServiceMock.ensureSameCity).toHaveBeenCalledWith(
+      'Cali, Valle del Cauca',
+      'Cali, Valle del Cauca',
+      'hire',
+    );
     expect(repositoryMock.create).toHaveBeenCalledWith(
       expect.objectContaining({
         price: 150000,
@@ -154,11 +189,21 @@ describe('RequestsServiceTest', () => {
     workersServiceMock.findMine.mockResolvedValue({
       id: 'worker-1',
     } as WorkerEntity);
+    workersServiceMock.findOne.mockResolvedValue({
+      id: 'worker-1',
+      user: { id: 'user-worker', location: 'Cali, Valle del Cauca' },
+    } as unknown as WorkerEntity);
     repositoryMock.save.mockImplementation((r) => Promise.resolve(r));
 
     const result = await service.updateStatus('uuid-1', 'user-worker', {
       status: RequestStatus.ACCEPTED,
     });
+
+    expect(requestsRulesServiceMock.ensureSameCity).toHaveBeenCalledWith(
+      undefined,
+      'Cali, Valle del Cauca',
+      'accept',
+    );
 
     expect(
       requestsRulesServiceMock.ensureActorCanSetStatus,

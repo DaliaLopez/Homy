@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -12,6 +13,7 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 const requestValidationPipe = new ValidationPipe({
@@ -39,5 +41,20 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   me(@Req() request: { user: { id: string; email: string; role: string } }) {
     return request.user;
+  }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  profile(@Req() request: { user: { id: string } }) {
+    return this.authService.getProfile(request.user.id);
+  }
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  updateProfile(
+    @Req() request: { user: { id: string } },
+    @Body(requestValidationPipe) dto: UpdateProfileDto,
+  ) {
+    return this.authService.updateProfile(request.user.id, dto);
   }
 }

@@ -20,6 +20,10 @@ export class CategoryEntity {
   @Column({ type: 'text', nullable: true })
   description!: string | null;
 
+  /** Imagen representativa (data URL o URL pública). */
+  @Column({ name: 'image_url', type: 'text', nullable: true })
+  imageUrl!: string | null;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
 

@@ -35,6 +35,7 @@ export class CategoriesService {
     const category = this.categoriesRepository.create({
       name,
       description: dto.description?.trim() || null,
+      imageUrl: dto.imageUrl ?? null,
       isActive: true,
     });
 
@@ -46,6 +47,32 @@ export class CategoriesService {
       where: { isActive: true },
       order: { name: 'ASC' },
     });
+  }
+
+  /** Para el administrador: incluye las inactivas y cuántos servicios tiene cada una. */
+  async findAllForAdmin() {
+    const categories = await this.categoriesRepository.find({
+      order: { name: 'ASC' },
+    });
+    const counts = await this.servicesRepository
+      .createQueryBuilder('service')
+      .select('service.category_id', 'categoryId')
+      .addSelect('COUNT(*)', 'total')
+      .groupBy('service.category_id')
+      .getRawMany<{ categoryId: string; total: string }>();
+
+    return categories.map((category) => ({
+      ...category,
+      servicesCount: Number(
+        counts.find((row) => row.categoryId === category.id)?.total ?? 0,
+      ),
+    }));
+  }
+
+  async activate(id: string): Promise<CategoryEntity> {
+    const category = await this.findOne(id);
+    category.isActive = true;
+    return this.categoriesRepository.save(category);
   }
 
   async findOne(id: string): Promise<CategoryEntity> {
@@ -79,6 +106,10 @@ export class CategoriesService {
 
     if (dto.description !== undefined) {
       category.description = dto.description.trim() || null;
+    }
+
+    if (dto.imageUrl !== undefined) {
+      category.imageUrl = dto.imageUrl || null;
     }
 
     return this.categoriesRepository.save(category);

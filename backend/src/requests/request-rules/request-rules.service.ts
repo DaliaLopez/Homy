@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
+import { sameCity } from '../../common/location';
 import { RequestEntity } from '../entities/request.entity';
 import { RequestStatus } from '../enums/request-status.enum';
 
@@ -41,6 +42,20 @@ const ACTOR_PERMISSIONS: Record<RequestActor, RequestStatus[]> = {
 
 @Injectable()
 export class RequestsRulesService {
+  /** Solo se contrata y se aceptan solicitudes entre cliente y trabajador de la misma ciudad. */
+  ensureSameCity(
+    clientLocation: string | null | undefined,
+    workerLocation: string | null | undefined,
+    action: 'hire' | 'accept',
+  ): void {
+    if (sameCity(clientLocation, workerLocation)) return;
+    throw new ForbiddenException(
+      action === 'hire'
+        ? 'You can only hire workers in your city.'
+        : 'You can only accept requests from clients in your city.',
+    );
+  }
+
   ensureCanBeCreated(params: {
     clientId: string;
     workerUserId: string;
@@ -53,7 +68,9 @@ export class RequestsRulesService {
       Number.isNaN(params.scheduledAt.getTime()) ||
       params.scheduledAt.getTime() <= Date.now()
     ) {
-      throw new BadRequestException('The scheduled date must be in the future.');
+      throw new BadRequestException(
+        'The scheduled date must be in the future.',
+      );
     }
 
     if (params.clientId === params.workerUserId) {

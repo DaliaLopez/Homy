@@ -12,6 +12,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles, RolesGuard } from '../auth/guards/roles.guard';
 import { CreateWorkerDto } from './dto/create-worker.dto';
 import { FindWorkersQueryDto } from './dto/find-workers-query.dto';
 import { UpdateWorkerDto } from './dto/update-worker.dto';
@@ -29,22 +30,27 @@ export class WorkersController {
 
   @Get()
   findAll(@Query(requestValidationPipe) query: FindWorkersQueryDto) {
-    return this.workersService.findAll(query);
+    return this.workersService.findAllPublic(query);
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
-  findMine(@Req() req: { user: { id: string } }) {
-    return this.workersService.findMine(req.user.id);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('worker')
+  async findMine(@Req() req: { user: { id: string } }) {
+    const [worker] = await this.workersService.enrich([
+      await this.workersService.findMine(req.user.id),
+    ]);
+    return worker;
   }
 
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.workersService.findOne(id);
+    return this.workersService.findOnePublic(id);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('worker')
   create(
     @Req() req: { user: { id: string } },
     @Body(requestValidationPipe) dto: CreateWorkerDto,
@@ -53,7 +59,8 @@ export class WorkersController {
   }
 
   @Patch('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('worker')
   updateMine(
     @Req() req: { user: { id: string } },
     @Body(requestValidationPipe) dto: UpdateWorkerDto,

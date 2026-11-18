@@ -1,6 +1,7 @@
 import { describe, jest, beforeEach, it, expect } from '@jest/globals';
 import { UsersService } from './users.service';
 import { UserEntity } from './entities/user.entity';
+import { RequestEntity } from '../requests/entities/request.entity';
 import { Test } from '@nestjs/testing';
 import { UserRulesService } from './user-rules/user-rules.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -24,6 +25,10 @@ describe('UsersServiceTest', () => {
     remove: jest.fn<(user: UserEntity) => Promise<UserEntity>>(),
   };
 
+  const requestsRepositoryMock = {
+    count: jest.fn<(options: any) => Promise<number>>(),
+  };
+
   const usersRulesServiceMock = {
     ensureEmailIsUnique: jest.fn(),
   };
@@ -37,6 +42,10 @@ describe('UsersServiceTest', () => {
         {
           provide: getRepositoryToken(UserEntity),
           useValue: repositoryMock,
+        },
+        {
+          provide: getRepositoryToken(RequestEntity),
+          useValue: requestsRepositoryMock,
         },
         {
           provide: UserRulesService,
@@ -124,5 +133,20 @@ describe('UsersServiceTest', () => {
     repositoryMock.save.mockRejectedValue(error);
 
     await expect(service.create(dto)).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('adds the number of requests the user made when the admin opens the profile', async () => {
+    repositoryMock.findOneBy.mockResolvedValue({
+      id: 'uuid-1',
+      name: 'Laura',
+    } as UserEntity);
+    requestsRepositoryMock.count.mockResolvedValue(3);
+
+    const result = await service.findOneForAdmin('uuid-1');
+
+    expect(requestsRepositoryMock.count).toHaveBeenCalledWith({
+      where: { client: { id: 'uuid-1' } },
+    });
+    expect(result).toMatchObject({ id: 'uuid-1', requestsCount: 3 });
   });
 });

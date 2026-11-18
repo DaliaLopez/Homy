@@ -24,19 +24,25 @@ const categoryValidationPipe = new ValidationPipe({
 });
 
 @Controller('categories')
-@UseGuards(JwtAuthGuard)
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post()
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   create(@Body(categoryValidationPipe) dto: CreateCategoryDto) {
     return this.categoriesService.create(dto);
   }
 
+  // Público: el inicio del cliente y el registro muestran las categorías activas.
   @Get()
   findAll() {
     return this.categoriesService.findAll();
+  }
+
+  @Get('all')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  findAllForAdmin() {
+    return this.categoriesService.findAllForAdmin();
   }
 
   @Get(':id')
@@ -45,7 +51,7 @@ export class CategoriesController {
   }
 
   @Patch(':id')
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body(categoryValidationPipe) dto: UpdateCategoryDto,
@@ -54,8 +60,14 @@ export class CategoriesController {
   }
 
   @Patch(':id/deactivate')
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   deactivate(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoriesService.deactivate(id);
+  }
+
+  @Patch(':id/activate')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  activate(@Param('id', ParseUUIDPipe) id: string) {
+    return this.categoriesService.activate(id);
   }
 }

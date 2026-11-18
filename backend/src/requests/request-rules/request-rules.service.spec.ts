@@ -11,8 +11,7 @@ import {
 describe('RequestsRulesServiceTest', () => {
   let rulesService: RequestsRulesService;
 
-  const buildRequest = (status: RequestStatus) =>
-    ({ status }) as RequestEntity;
+  const buildRequest = (status: RequestStatus) => ({ status }) as RequestEntity;
 
   const validCreation = () => ({
     clientId: 'user-client',
@@ -139,5 +138,32 @@ describe('RequestsRulesServiceTest', () => {
         serviceIsActive: false,
       }),
     ).toThrow(ConflictException);
+  });
+
+  it('allows hiring and accepting only within the same city (ignoring case and accents)', () => {
+    expect(() =>
+      rulesService.ensureSameCity(
+        'Cali, Valle del Cauca',
+        'cali, valle del cauca',
+        'hire',
+      ),
+    ).not.toThrow();
+    expect(() =>
+      rulesService.ensureSameCity(
+        'Medellín, Antioquia',
+        'Medellin, Antioquia',
+        'accept',
+      ),
+    ).not.toThrow();
+    expect(() =>
+      rulesService.ensureSameCity(
+        'Cali, Valle del Cauca',
+        'Bogotá, Bogotá D.C.',
+        'hire',
+      ),
+    ).toThrow('You can only hire workers in your city.');
+    expect(() =>
+      rulesService.ensureSameCity(null, 'Cali, Valle del Cauca', 'accept'),
+    ).toThrow('You can only accept requests from clients in your city.');
   });
 });

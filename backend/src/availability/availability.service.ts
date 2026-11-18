@@ -1,8 +1,14 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
+/** La duración de un servicio se agenda en horas enteras (60 min => 1 h, 90 min => 2 h). */
+export function blockHours(durationMinutes: number): number {
+  return Math.max(1, Math.ceil(durationMinutes / 60));
+}
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, MoreThanOrEqual, Repository } from 'typeorm';
 
@@ -128,7 +134,7 @@ export class AvailabilityService {
     const start =
       date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds();
 
-    const end = start + service.durationMinutes * 60;
+    const end = start + blockHours(service.durationMinutes) * 3600;
 
     return { start, end, date };
   }
@@ -334,7 +340,14 @@ export class AvailabilityService {
       startDate.getMinutes() * 60 +
       startDate.getSeconds();
 
-    const requestEnd = requestStart + service.durationMinutes * 60;
+    if (startDate.getMinutes() !== 0 || startDate.getSeconds() !== 0) {
+      throw new BadRequestException(
+        'Services start on the hour (for example 08:00).',
+      );
+    }
+
+    const requestEnd =
+      requestStart + blockHours(service.durationMinutes) * 3600;
 
     const dayName = this.getDayName(startDate);
 
@@ -392,5 +405,88 @@ export class AvailabilityService {
         );
       }
     }
+  }
+
+  /**
+   * Horas de inicio libres de un trabajador en una fecha para un servicio.
+   * Una hora sirve si todo el bloque (duración redondeada a horas) cabe en una
+   * franja de disponibilidad y no se cruza con otra solicitud activa.
+   * Ej.: servicio de 2 h agendado a las 08:00 => 08:00–10:00 queda ocupado.
+   */
+  async getFreeSlots(workerId: string, date: string, serviceId: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      throw new BadRequestException('date must use the YYYY-MM-DD format.');
+    }
+
+    const service = await this.servicesRepository.findOne({
+      where: { id: serviceId },
+      relations: { worker: true },
+    });
+    if (!service || service.worker.id !== workerId) {
+      throw new NotFoundException(
+        'The service does not belong to this worker.',
+      );
+    }
+
+    const hours = blockHours(service.durationMinutes);
+    const [year, month, day] = date.split('-').map(Number);
+    const target = new Date(year, month - 1, day);
+    const dayName = this.getDayName(target);
+
+    const availabilities = (await this.findByWorker(workerId)).filter(
+      (availability) => availability.day === dayName,
+    );
+
+    const requests = await this.requestsRepository.find({
+      where: {
+        workerId,
+        status: In([
+          RequestStatus.REQUESTED,
+          RequestStatus.ACCEPTED,
+          RequestStatus.IN_PROGRESS,
+        ]),
+      },
+    });
+
+    const busy: { start: number; end: number }[] = [];
+    for (const request of requests) {
+      const interval = await this.getRequestInterval(request);
+      if (this.isSameCalendarDay(interval.date, target)) {
+        busy.push({ start: interval.start, end: interval.end });
+      }
+    }
+
+    const now = new Date();
+    const slots: string[] = [];
+    // Horas en las que el servicio cabría completo, pero que ya tienen otra solicitud encima.
+    const taken: string[] = [];
+    for (const availability of availabilities) {
+      const from = Math.ceil(this.timeToSeconds(availability.startTime) / 3600);
+      const to = Math.floor(this.timeToSeconds(availability.endTime) / 3600);
+      // Bloques seguidos del largo del servicio (8–10, 10–12, 12–14…): cada uno empieza
+      // donde termina el anterior y solo cuenta si el servicio alcanza a terminar dentro de la franja.
+      for (let hour = from; hour + hours <= to; hour += hours) {
+        const start = hour * 3600;
+        const end = start + hours * 3600;
+        const slotDate = new Date(year, month - 1, day, hour);
+        if (slotDate.getTime() <= now.getTime()) continue;
+        const overlaps = busy.some(
+          (item) => start < item.end && end > item.start,
+        );
+        (overlaps ? taken : slots).push(`${String(hour).padStart(2, '0')}:00`);
+      }
+    }
+    const free = [...new Set(slots)].sort();
+
+    return {
+      date,
+      durationHours: hours,
+      slots: free,
+      taken: [...new Set(taken)].filter((hour) => !free.includes(hour)).sort(),
+      busy: busy.map((item) => ({
+        from: `${String(Math.floor(item.start / 3600)).padStart(2, '0')}:00`,
+        to: `${String(Math.ceil(item.end / 3600)).padStart(2, '0')}:00`,
+      })),
+    };
   }
 }
