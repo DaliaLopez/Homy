@@ -139,14 +139,8 @@ export class VerificationsService {
           comment: null,
         });
       }
-      // La foto de perfil enviada también se usa como avatar.
-      const profile = documents.find((doc) => doc.key === 'profile');
-      if (profile && profile.file.type.startsWith('image/')) {
-        await this.usersRepository.update(
-          { id: userId },
-          { avatarUrl: profile.file.dataUrl },
-        );
-      }
+      // La foto de perfil enviada NO se usa todavía como avatar: el trabajador sigue con sus
+      // iniciales hasta que el administrador apruebe sus documentos (ver applyApprovedAvatar).
       if (dto.description || dto.experience) {
         await this.workersService.updateMine(userId, {
           ...(dto.description ? { description: dto.description } : {}),
@@ -279,6 +273,27 @@ export class VerificationsService {
     return verification;
   }
 
+  /**
+   * Usa la foto de perfil enviada en la verificación como avatar del trabajador, pero solo cuando
+   * el administrador aprobó todos los documentos de identidad (foto de perfil, cédula y foto con
+   * la cédula). Si alguno sigue pendiente o fue rechazado, el avatar no cambia y el trabajador
+   * sigue viendo sus iniciales. Al reenviar correcciones y aprobarse, se aplica la foto aprobada.
+   */
+  private async applyApprovedAvatar(
+    verification: VerificationEntity,
+  ): Promise<void> {
+    if (verification.type !== 'initial') return;
+    const allApproved =
+      verification.documents.length > 0 &&
+      verification.documents.every((doc) => doc.status === 'approved');
+    const profile = verification.documents.find((doc) => doc.key === 'profile');
+    if (!allApproved || !profile?.file.type.startsWith('image/')) return;
+    await this.usersRepository.update(
+      { id: verification.worker.user.id },
+      { avatarUrl: profile.file.dataUrl },
+    );
+  }
+
   async review(
     id: string,
     adminId: string,
@@ -330,6 +345,10 @@ export class VerificationsService {
 
     verification.reviewedBy = { id: adminId } as UserEntity;
     verification.reviewedAt = new Date();
+
+    // La foto de perfil pasa a ser el avatar (navbar, perfil, catálogo) solo cuando el
+    // administrador aprueba los documentos de identidad.
+    await this.applyApprovedAvatar(verification);
 
     if (verification.type === 'initial') {
       if (docsRejected || approvedCats.length === 0) {

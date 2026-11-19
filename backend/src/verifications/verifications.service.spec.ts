@@ -93,10 +93,8 @@ describe('VerificationsServiceTest', () => {
       name: 'Plomería',
       status: 'pending',
     });
-    expect(usersMock.update).toHaveBeenCalledWith(
-      { id: 'u1' },
-      { avatarUrl: file.dataUrl },
-    );
+    // La foto enviada no se vuelve avatar hasta que el admin apruebe los documentos.
+    expect(usersMock.update).not.toHaveBeenCalled();
   });
 
   it('returns an empty history when the worker has no profile yet', async () => {
@@ -196,5 +194,61 @@ describe('VerificationsServiceTest', () => {
       reasons: ['Ilegible o borroso'],
     });
     expect(workersServiceMock.addApprovedCategories).not.toHaveBeenCalled();
+  });
+
+  // La foto de perfil pasa a ser el avatar solo cuando el admin aprueba todos los documentos.
+  const withProfilePhoto = () =>
+    ({
+      id: 'v1',
+      type: 'initial',
+      status: VerificationStatus.PENDING,
+      worker: { id: 'w1', user: { id: 'u1' } },
+      documents: ['profile', 'id', 'selfie'].map((key) => ({
+        key,
+        label: key,
+        status: 'pending',
+        reasons: [],
+        comment: null,
+        file,
+      })),
+      categories: [
+        {
+          categoryId: 'c1',
+          name: 'Plomería',
+          status: 'pending',
+          reasons: [],
+          comment: null,
+          files: [file],
+          note: null,
+        },
+      ],
+    }) as unknown as VerificationEntity;
+
+  it('uses the profile photo as avatar once every document is approved', async () => {
+    repositoryMock.findOne.mockResolvedValue(withProfilePhoto());
+    await service.review('v1', 'admin', {
+      documents: (['profile', 'id', 'selfie'] as const).map((key) => ({
+        key,
+        status: 'approved' as const,
+      })),
+      categories: [{ categoryId: 'c1', status: 'approved' }],
+    });
+    expect(usersMock.update).toHaveBeenCalledWith(
+      { id: 'u1' },
+      { avatarUrl: file.dataUrl },
+    );
+  });
+
+  it('keeps the initials when a document is not approved yet', async () => {
+    repositoryMock.findOne.mockResolvedValue(withProfilePhoto());
+    await service.review('v1', 'admin', {
+      documents: [
+        { key: 'profile', status: 'approved' },
+        { key: 'id', status: 'rejected', reasons: ['Ilegible o borroso'] },
+        { key: 'selfie', status: 'approved' },
+      ],
+      categories: [{ categoryId: 'c1', status: 'approved' }],
+    });
+    expect(usersMock.update).not.toHaveBeenCalled();
   });
 });

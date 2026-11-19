@@ -114,6 +114,22 @@ export class AuthService {
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const user = await this.getProfile(userId);
+
+    // Regla del trabajador: su nombre y su foto de perfil son los que envió en la verificación
+    // y que el administrador revisó y aprobó. Por eso no los puede cambiar desde "Datos de mi
+    // cuenta": si lo intenta (por ejemplo, llamando la API directamente) se responde 403.
+    // Si llega el mismo nombre que ya tiene, no cuenta como cambio.
+    if (user.role === 'worker') {
+      if (dto.name !== undefined && dto.name.trim() !== user.name) {
+        throw new ForbiddenException('Workers cannot change their name.');
+      }
+      if (dto.avatarUrl !== undefined) {
+        throw new ForbiddenException(
+          'Workers cannot change their profile photo.',
+        );
+      }
+    }
+
     if (dto.name !== undefined) user.name = dto.name.trim();
     if (dto.phone !== undefined) user.phone = dto.phone.trim();
     if (dto.location !== undefined) user.location = dto.location.trim();
