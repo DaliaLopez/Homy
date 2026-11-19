@@ -1,0 +1,152 @@
+/* Administración: categorías de servicio. */
+
+@layer components {
+  /* Categorías (admin): filtros a la izquierda y "Nueva categoría" a la derecha, siempre en una fila */
+  .categories-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .categories-toolbar .tabs {
+    flex: 0 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
+    margin-inline: 0;
+    padding: 0;
+    overflow-x: auto;
+  }
+
+  .categories-toolbar__new {
+    flex-shrink: 0;
+  }
+}
+
+@layer components {
+  @media (max-width: 479px) {
+    /* Pantallas angostas: el botón queda como círculo con "+" para no partir la fila. */
+
+    .categories-toolbar__new {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: var(--radius-pill);
+    }
+
+    .categories-toolbar__label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+  }
+}
+
+@layer components {
+  @media (max-width: 379px) {
+    .categories-toolbar .tabs {
+      gap: 6px;
+    }
+
+    .categories-toolbar .tab {
+      padding: 0 12px;
+    }
+  }
+}
+
+@layer components {
+  /* Categorías (admin): tarjeta con imagen grande y selector de imagen del modal */
+  .category-card__media {
+    position: relative;
+    height: 210px;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--color-sage);
+  }
+
+  .category-card__media img,
+  .image-picker img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .category-card__media img {
+    transition: transform 0.45s ease;
+  }
+
+  .category-card:hover .category-card__media img {
+    transform: scale(1.04);
+  }
+
+  .category-card__media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(20, 22, 16, 0) 50%, rgba(20, 22, 16, 0.55) 100%);
+    pointer-events: none;
+  }
+
+  .category-card__status {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 1;
+  }
+
+  .category-card__count {
+    position: absolute;
+    bottom: 14px;
+    left: 16px;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+
+  .image-picker {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--color-sage);
+  }
+
+  .image-picker__edit {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 6px 18px rgba(20, 22, 16, 0.18);
+    color: var(--color-dark);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s;
+  }
+
+  .image-picker__edit:hover {
+    background: #fff;
+  }
+}
+
+@media (min-width: 1024px) {
+  @layer components {
+    .category-card__media {
+      height: 230px;
+    }
+  }
+}

@@ -1,0 +1,231 @@
+/* Formularios: campos, selects, opciones tipo tarjeta y subida de archivos. */
+
+@layer components {
+  /* ======================================================================
+     Formularios
+     ====================================================================== */
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  .form-grid {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .label {
+    color: var(--color-text);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+  }
+
+  .input,
+  .select,
+  .textarea {
+    width: 100%;
+    height: 48px;
+    padding: 0 var(--space-4);
+    border: 0;
+    border-radius: var(--radius-md);
+    outline: none;
+    background: var(--color-card);
+    color: var(--color-text);
+    font-size: var(--fs-sm);
+    transition: box-shadow 0.15s;
+  }
+
+  .input::placeholder,
+  .textarea::placeholder {
+    color: var(--color-placeholder);
+  }
+
+  .input:focus,
+  .select:focus,
+  .textarea:focus {
+    box-shadow: 0 0 0 2px rgba(121, 134, 99, 0.4);
+  }
+
+  .input:disabled,
+  .select:disabled {
+    cursor: not-allowed;
+    color: var(--color-muted);
+  }
+
+  .input[aria-invalid="true"],
+  .select[aria-invalid="true"],
+  .textarea[aria-invalid="true"] {
+    box-shadow: 0 0 0 2px rgba(152, 111, 98, 0.45);
+  }
+
+  .select {
+    appearance: none;
+    padding-right: 44px;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%23313628' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 16px center;
+    background-repeat: no-repeat;
+  }
+
+  .textarea {
+    height: auto;
+    min-height: 120px;
+    padding: 14px var(--space-4);
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  .input-wrap .input {
+    padding-right: 52px;
+  }
+
+  .input-wrap__action {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-muted);
+  }
+
+  .field__hint {
+    color: var(--color-muted-strong);
+    font-size: var(--fs-xs);
+    line-height: 1.5;
+  }
+
+  .field__error {
+    color: var(--color-danger);
+    font-size: var(--fs-xs);
+  }
+
+  .form-error {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    font-size: var(--fs-sm);
+  }
+
+  /* Opción tipo tarjeta (elegir rol, motivo de cancelación) */
+  .option-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    width: 100%;
+    padding: var(--space-4);
+    border: 0;
+    border-radius: 26px;
+    background: var(--color-card);
+    color: var(--color-text);
+    text-align: left;
+    transition: background-color 0.15s;
+  }
+
+  .option-card:hover {
+    background: var(--color-sage);
+  }
+
+  .option-card.is-selected {
+    background: var(--color-dark);
+    color: #fff;
+  }
+
+  .option-card__icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    background: var(--color-sage-2);
+    color: var(--color-dark);
+  }
+
+  .option-card.is-selected .option-card__icon {
+    background: #fff;
+  }
+
+  .option-card__radio {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    border: 2px solid var(--color-muted);
+    border-radius: 50%;
+  }
+
+  .option-card.is-selected .option-card__radio {
+    border-color: #fff;
+  }
+
+  .option-card.is-selected .option-card__radio::after {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+  }
+
+  /* Subir archivos */
+  .upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-6) var(--space-4);
+    border: 1.5px dashed var(--color-sage-3);
+    border-radius: var(--radius-lg);
+    background: #fff;
+    color: var(--color-muted-strong);
+    text-align: center;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+  }
+
+  .upload:hover {
+    border-color: var(--color-olive);
+    background: var(--color-sage);
+  }
+
+  .upload.is-done {
+    border-style: solid;
+    border-color: var(--color-sage-2);
+    background: var(--color-sage);
+    color: var(--color-dark);
+  }
+}
+
+@media (min-width: 768px) {
+  .form-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@layer components {
+  .upload--compact {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: var(--space-4);
+  }
+}

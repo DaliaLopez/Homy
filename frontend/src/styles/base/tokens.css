@@ -1,0 +1,108 @@
+/* Variables de diseño (:root) y sus ajustes por tamaño de pantalla. */
+
+/* ---------- Tokens ---------- */
+:root {
+  /* Color */
+  --color-dark: #313628;
+  --color-dark-hover: #262a1f;
+  --color-olive: #798663;
+  --color-olive-strong: #6e7957;
+  --color-olive-text: #5f6b4c;
+  --color-sage: #ebf0e5;
+  --color-sage-2: #e3ebd9;
+  --color-sage-3: #dfe6d7;
+  --color-card: #f2f2f2;
+  --color-surface: #ffffff;
+  --color-border: #ebf0e5;
+  --color-border-neutral: #e8e8e2;
+  --color-text: #0f0f0f;
+  --color-text-soft: #313628;
+  --color-muted: #858582;
+  --color-muted-strong: #5e5e5b;
+  --color-placeholder: #9a9a97;
+  --color-neutral-chip: #e6e6e1;
+  --color-danger-bg: #f3e9e5;
+  --color-danger-soft: #fbf4f1;
+  --color-danger-border: #ebd3c9;
+  --color-danger: #986f62;
+  --color-overlay: rgba(49, 54, 40, 0.45);
+
+  /* Tipografía (Urbanist se carga con next/font en app/layout.tsx) */
+  --font-sans: var(--font-urbanist), "Urbanist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fs-xs: 0.75rem;   /* 12px */
+  --fs-sm: 0.875rem;  /* 14px */
+  --fs-md: 0.9375rem; /* 15px */
+  --fs-base: 1rem;    /* 16px */
+  --fs-lg: 1.125rem;  /* 18px */
+  --fs-h3: 1.25rem;   /* 20px */
+  --fs-h2: 1.375rem;  /* 22px */
+  --fs-h1: 1.625rem;  /* 26px → 30px en tablet */
+  --fs-display: 1.75rem;
+  --tracking-tight: -1.13px;
+
+  /* Espaciado */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Radios */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  /* Sombras */
+  --shadow-float: 0 12px 40px rgba(49, 54, 40, 0.2);
+  --shadow-pop: 0 22px 70px rgba(49, 54, 40, 0.18);
+  --shadow-modal: 0 30px 90px rgba(49, 54, 40, 0.28);
+
+  /* Layout */
+  --container: 1180px;
+  --gutter: 20px;
+  --header-h: 80px;
+  --bottom-nav-space: 128px;
+  --focus-ring: 2px solid var(--color-olive);
+}
+
+/* La app usa un tema claro único, igual que el diseño. */
+:root {
+  color-scheme: light;
+}
+
+@media (max-width: 767px) {
+  /* ==========================================================================
+     Responsive
+     ========================================================================== */
+  /* Móvil: textos algo más grandes para que se lean bien (igual que el
+     diseño del cliente) y elementos solo de móvil. */
+
+  :root {
+    --fs-xs: 0.8125rem;
+    --fs-sm: 0.9375rem;
+  }
+}
+
+@media (min-width: 768px) {
+  /* Tablet en adelante: hay nav superior, no barra inferior. */
+
+  :root {
+    --gutter: 32px;
+    --fs-h1: 1.875rem;
+    --header-h: 72px;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Escritorio */
+
+  :root {
+    --gutter: 40px;
+  }
+}

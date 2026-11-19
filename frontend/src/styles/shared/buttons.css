@@ -1,0 +1,117 @@
+/* Botones y enlaces. */
+
+@layer components {
+  /* ======================================================================
+     Botones y enlaces
+     ====================================================================== */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    height: 52px;
+    padding: 0 var(--space-6);
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    font-size: var(--fs-md);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    text-align: center;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+  }
+
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    opacity: 0.55;
+  }
+
+  .btn--primary {
+    background: var(--color-dark);
+    color: #fff;
+  }
+
+  .btn--primary:hover:not(:disabled) {
+    background: var(--color-dark-hover);
+  }
+
+  .btn--secondary {
+    background: var(--color-sage);
+    color: var(--color-dark);
+  }
+
+  .btn--secondary:hover:not(:disabled) {
+    background: var(--color-sage-2);
+  }
+
+  .btn--outline {
+    border-color: var(--color-sage-3);
+    background: #fff;
+    color: var(--color-dark);
+  }
+
+  .btn--outline:hover:not(:disabled) {
+    background: var(--color-card);
+  }
+
+  .btn--neutral {
+    background: var(--color-neutral-chip);
+    color: #4a4a4a;
+  }
+
+  .btn--danger {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+  }
+
+  .btn--sm {
+    height: 40px;
+    padding: 0 var(--space-4);
+    font-size: var(--fs-sm);
+  }
+
+  .btn--block {
+    width: 100%;
+  }
+
+  .btn-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .link-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 0;
+    background: none;
+    padding: 0;
+    color: var(--color-muted);
+    font-size: var(--fs-sm);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .link-more:hover {
+    color: var(--color-dark);
+  }
+
+  .link-strong {
+    color: var(--color-olive-text);
+    font-weight: 600;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-muted);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+
+  .back-link:hover {
+    color: var(--color-dark);
+  }
+}

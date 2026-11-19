@@ -1,0 +1,98 @@
+/* Solicitudes: tarjeta de solicitud, horarios al solicitar y observaciones del detalle. */
+
+@layer components {
+  /* Solicitud / servicio: foto · chips · nombre · precio · fecha y hora */
+  .request-card {
+    --card-pad: var(--space-5);
+    --card-gap: var(--space-5);
+    border-radius: var(--radius-xl);
+  }
+
+  .request-card__top {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+
+  .request-card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .request-card__heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .request-card__name {
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    line-height: 1.15;
+  }
+
+  .request-card__service {
+    margin-top: 2px;
+    color: var(--color-text-soft);
+    font-size: var(--fs-md);
+  }
+}
+
+@media (max-width: 767px) {
+  /* ==========================================================================
+     Responsive de componentes
+     ========================================================================== */
+  /* Móvil */
+
+  .request-card {
+    --card-pad: var(--space-4);
+    --card-gap: var(--space-4);
+  }
+
+  .request-card__heading {
+    flex-direction: row;
+  }
+
+  .request-card .price {
+    font-size: 1.25rem;
+  }
+}
+
+/* Solicitar servicio: horas como "11:00 am – 1:00 pm"; las ocupadas por otros clientes, deshabilitadas. */
+.time-slot:disabled {
+  background: var(--color-card);
+  color: var(--color-placeholder);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.time-slot:disabled:hover {
+  background: var(--color-card);
+  color: var(--color-placeholder);
+}
+
+/* Detalle de la solicitud: "Observaciones" del cliente, alineadas a la izquierda con la tarjeta. */
+.request-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-neutral);
+}
+
+.request-notes__title {
+  font-size: var(--fs-base);
+  font-weight: 600;
+}
+
+.request-notes__text {
+  color: var(--color-muted-strong);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

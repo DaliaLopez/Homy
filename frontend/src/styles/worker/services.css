@@ -1,0 +1,107 @@
+/* Trabajador: publicar servicio y estado del servicio enviado. */
+
+@layer components {
+  /* Publicar servicio: menos espacio entre el título de categoría y los botones */
+  .service-form {
+    --stack-gap: var(--space-3);
+  }
+
+  .service-form__category-hint {
+    font-size: 14px;
+  }
+
+  /* Publicar servicio: "¿Cómo se publica tu servicio?" sobre verde oscuro */
+  .publish-guide .eyebrow {
+    color: #c9d1b8;
+  }
+
+  .publish-guide .list-row {
+    border-bottom-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .publish-guide .muted {
+    color: #c9d1b8;
+  }
+
+  /* Servicio enviado a revisión: tarjeta blanca con el servicio */
+  .service-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+    width: 100%;
+    padding: var(--space-5);
+    border-radius: 28px;
+    background: #fff;
+    text-align: left;
+  }
+
+  .service-summary__icon {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    border-radius: 18px;
+    background: var(--color-dark);
+    color: #fff;
+  }
+
+  .service-summary__body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .service-summary__name {
+    margin-top: 2px;
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .service-summary__side {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    width: 100%;
+  }
+
+  .service-summary__price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+}
+
+@media (min-width: 768px) {
+  .service-summary {
+    flex-wrap: nowrap;
+    padding: var(--space-6) var(--space-8);
+  }
+
+  .service-summary__icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .service-summary__name {
+    font-size: 1.375rem;
+  }
+
+  .service-summary__side {
+    flex-direction: column;
+    align-items: flex-end;
+    width: auto;
+  }
+
+  .service-summary__price {
+    font-size: 1.75rem;
+  }
+
+  /* Publicar o editar servicio: títulos de los campos en 15px en web (en móvil ya miden 15px). */
+
+  .service-form .label {
+    font-size: 15px;
+  }
+}

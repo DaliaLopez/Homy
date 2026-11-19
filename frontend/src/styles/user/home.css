@@ -1,0 +1,153 @@
+/* Cliente: inicio (banner, categorías y profesionales). */
+
+@layer components {
+  /* Imagen con degradado y texto encima (banner y categorías) */
+  .media-card {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--color-card);
+    color: #fff;
+    isolation: isolate;
+  }
+
+  .media-card__img {
+    object-fit: cover;
+    transition: transform 0.5s;
+  }
+
+  .media-card:hover .media-card__img {
+    transform: scale(1.04);
+  }
+
+  .media-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(to top, rgba(49, 54, 40, 0.88), transparent 65%);
+  }
+
+  .media-card__body {
+    position: absolute;
+    left: var(--space-4);
+    right: var(--space-3);
+    bottom: var(--space-4);
+    z-index: 2;
+  }
+
+  .media-card--hero {
+    height: 160px;
+  }
+
+  .media-card--hero .media-card__title {
+    display: block;
+    margin-top: 2px;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: var(--tracking-tight);
+  }
+
+  .media-card--category {
+    height: 184px;
+  }
+
+  .media-card--category .media-card__title {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  /* Profesional en lista (inicio, listado público) */
+  .person-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    min-height: 96px;
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--color-card);
+    transition: transform 0.15s;
+  }
+
+  .person-card:hover {
+    transform: translateX(4px);
+  }
+
+  .person-card__photo {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background: var(--color-dark);
+  }
+
+  .person-card__body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .person-card__name {
+    display: block;
+    font-size: var(--fs-base);
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  .person-card__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    color: var(--color-olive);
+    font-size: var(--fs-xs);
+  }
+
+  .person-card__status {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-olive);
+    font-size: var(--fs-xs);
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 390px) {
+  /* Teléfonos medianos en adelante: mostrar estado del profesional. */
+
+  .person-card__status {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 768px) {
+  .media-card--hero {
+    height: 224px;
+  }
+
+  .media-card--hero .media-card__body {
+    left: var(--space-6);
+    bottom: var(--space-6);
+  }
+
+  .media-card--hero .media-card__title {
+    font-size: 26px;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Escritorio */
+
+  .media-card--hero {
+    height: 270px;
+  }
+
+  .media-card--category {
+    width: 100%;
+  }
+}

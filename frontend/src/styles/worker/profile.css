@@ -1,0 +1,25 @@
+/* Trabajador: categorías del perfil. */
+
+/* Categorías del perfil */
+.profile-categories {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+@media (min-width: 640px) {
+  .profile-categories {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Categorías verificadas del perfil: estilo de las opciones de categoría, pero sin efecto al pasar el mouse (no son botones). */
+.profile-categories .category-picker__option:hover {
+  background: var(--color-sage);
+}
+
+/* En revisión: como las categorías bloqueadas al agregar una categoría (gris con etiqueta blanca). */
+.profile-categories .category-picker__option.is-locked {
+  background: var(--color-card);
+  color: var(--color-muted-strong);
+}

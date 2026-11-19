@@ -1,0 +1,330 @@
+/* Cliente: catálogo de profesionales (búsqueda, pestañas y filtros). */
+
+/* ======================================================================
+   Catálogo de profesionales (cliente): banner, búsqueda, pestañas, filtros y resultados
+   ====================================================================== */
+.catalog-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-6);
+  border-radius: 28px;
+  background: var(--color-sage);
+}
+
+.catalog-hero .eyebrow {
+  color: var(--color-olive-text);
+}
+
+.catalog-hero__title {
+  max-width: 22ch;
+  font-size: clamp(2rem, 4.2vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -1.5px;
+}
+
+.catalog-hero__lead {
+  color: var(--color-muted-strong);
+  font-size: var(--fs-lg);
+}
+
+.catalog .tab {
+  background: var(--color-sage);
+  color: var(--color-olive-text);
+}
+
+.catalog .tab.is-active {
+  background: var(--color-dark);
+  color: #fff;
+}
+
+.catalog-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+/* Panel de filtros: en móvil se abre con el botón "Filtros"; en escritorio siempre visible. */
+.catalog-filters {
+  border: 1px solid var(--color-border-neutral);
+  border-radius: 28px;
+  background: var(--color-surface);
+}
+
+.catalog-filters__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.catalog-filters__chevron {
+  margin-left: auto;
+  color: var(--color-muted);
+  transform: rotate(90deg);
+  transition: transform 0.2s;
+}
+
+.catalog-filters.is-open .catalog-filters__chevron {
+  transform: rotate(-90deg);
+}
+
+.catalog-filters__panel {
+  display: none;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.catalog-filters.is-open .catalog-filters__panel {
+  display: flex;
+}
+
+.catalog-filters__head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* En móvil el botón ya dice "Filtros": solo se muestra "Restablecer". */
+.catalog-filters__head h2 {
+  display: none;
+}
+
+.catalog-filters__head h2 {
+  font-size: var(--fs-h3);
+}
+
+.catalog-filters__reset {
+  border: 0;
+  background: none;
+  color: var(--color-muted-strong);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.catalog-filters__reset:hover {
+  color: var(--color-dark);
+  text-decoration: underline;
+}
+
+.catalog-filters__select {
+  background-color: var(--color-sage);
+}
+
+.catalog-price {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.catalog-price legend {
+  margin-bottom: var(--space-1);
+  padding: 0;
+}
+
+.catalog-price.is-disabled {
+  opacity: 0.55;
+}
+
+.catalog-price__hint {
+  color: var(--color-muted);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+
+.catalog-price__inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.catalog-price__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  color: var(--color-muted-strong);
+  font-size: var(--fs-sm);
+}
+
+.catalog-price__box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 48px;
+  padding: 0 var(--space-3);
+  border-radius: 16px;
+  background: var(--color-card);
+  color: var(--color-muted);
+}
+
+.catalog-price__box input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--fs-base);
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.catalog-price__box input::-webkit-outer-spin-button,
+.catalog-price__box input::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.catalog-price__box:focus-within {
+  outline: 2px solid var(--color-olive);
+  outline-offset: 1px;
+}
+
+.catalog-price__range {
+  width: 100%;
+  margin: var(--space-2) 0 0;
+  accent-color: var(--color-dark);
+}
+
+.catalog-price__scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-muted);
+  font-size: var(--fs-xs);
+}
+
+.catalog-rating {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.catalog-rating__option {
+  height: 40px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--color-sage);
+  color: var(--color-olive-text);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.catalog-rating__option:hover {
+  background: var(--color-sage-2);
+}
+
+.catalog-rating__option.is-active {
+  background: var(--color-dark);
+  color: #fff;
+}
+
+.catalog-available {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.catalog-available input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--color-dark);
+  cursor: pointer;
+}
+
+.catalog-filters__note {
+  padding: var(--space-4);
+  border-radius: 18px;
+  background: var(--color-card);
+  color: var(--color-muted-strong);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+
+.catalog-results__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.catalog-results__count {
+  font-size: var(--fs-h2);
+}
+
+.catalog-results__order {
+  font-size: var(--fs-sm);
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .catalog-hero {
+    padding: var(--space-10) var(--space-12, 48px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .catalog-layout {
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: var(--space-8);
+  }
+
+  .catalog-filters__toggle {
+    display: none;
+  }
+
+  .catalog-filters__panel {
+    display: flex;
+    padding: var(--space-6);
+  }
+
+  .catalog-filters__head {
+    justify-content: space-between;
+  }
+
+  .catalog-filters__head h2 {
+    display: block;
+  }
+
+  .catalog-results__count {
+    font-size: 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

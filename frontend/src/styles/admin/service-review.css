@@ -1,0 +1,78 @@
+/* Administración: revisión de servicios. */
+
+@layer components {
+  /* Detalle de servicio (admin): datos en tarjetas blancas y botones de decisión */
+  .service-detail__facts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .service-detail__fact {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-lg);
+    background: #fff;
+  }
+
+  .service-detail__fact strong {
+    font-size: var(--fs-lg);
+    font-weight: 700;
+  }
+
+  /* Los tres botones siempre en una fila; en pantallas angostas "Aprobar servicio" se acorta a "Aprobar". */
+  .service-decision {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: var(--space-2);
+  }
+
+  .service-decision .btn {
+    padding-inline: 12px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .service-decision__long {
+    display: none;
+  }
+}
+
+@layer components {
+  @media (min-width: 480px) {
+    .service-decision {
+      grid-template-columns: 1.4fr 1fr 1fr;
+      gap: var(--space-3);
+    }
+
+    .service-decision .btn {
+      padding-inline: var(--space-4);
+      font-size: var(--fs-md);
+    }
+
+    .service-decision__long {
+      display: inline;
+    }
+  }
+}
+
+@layer components {
+  .service-decision__reason {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border-radius: var(--radius-lg);
+    background: #fff;
+  }
+}
+
+@media (min-width: 768px) {
+  /* Verificación en revisión: dos tarjetas lado a lado y más aire desde tablet. */
+
+  .service-detail__facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

@@ -1,0 +1,13 @@
+/* Accesibilidad: reducir animaciones si el sistema lo pide. */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Respeta la preferencia de menos movimiento. */
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

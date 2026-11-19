@@ -1,0 +1,117 @@
+/* Administración: tablas (en móvil cada fila se ve como tarjeta). */
+
+@layer components {
+  /* ======================================================================
+     Tabla (administración). En móvil cada fila se muestra como tarjeta.
+     ====================================================================== */
+  .table-wrap {
+    overflow: hidden;
+    border: 1px solid var(--color-border-neutral);
+    border-radius: var(--radius-xl);
+  }
+
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+
+  .table th {
+    padding: var(--space-4) var(--space-5);
+    background: var(--color-card);
+    color: var(--color-muted-strong);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .table td {
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--color-border-neutral);
+    vertical-align: middle;
+  }
+
+  .table__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+  }
+
+  .lock {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-muted);
+    font-size: var(--fs-xs);
+  }
+}
+
+@media (max-width: 767px) {
+  /* Tabla → tarjetas apiladas */
+  .table-wrap {
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table tr {
+    margin-bottom: var(--space-3);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    background: var(--color-card);
+  }
+
+  .table td {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: 6px 0;
+    border: 0;
+    text-align: right;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    color: var(--color-muted);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .table td.table__main {
+    justify-content: flex-start;
+    padding-bottom: var(--space-3);
+    text-align: left;
+  }
+
+  .table td.table__main::before {
+    display: none;
+  }
+
+  .table__actions {
+    justify-content: stretch;
+    padding-top: var(--space-3) !important;
+  }
+
+  .table__actions::before {
+    display: none;
+  }
+
+  .table__actions .btn {
+    flex: 1;
+  }
+}

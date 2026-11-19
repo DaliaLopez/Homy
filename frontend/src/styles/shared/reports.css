@@ -1,0 +1,178 @@
+/* Reportes: formulario y tarjeta de evidencia. */
+
+/* ======================================================================
+   Reportar un problema
+   ====================================================================== */
+.report-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.report-head__back {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-sage);
+  color: var(--color-dark);
+  transition: background-color 0.15s;
+}
+
+.report-head__back:hover {
+  background: var(--color-sage-2);
+}
+
+.report-head .lead {
+  margin-top: 4px;
+}
+
+.report-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.report-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-neutral);
+  border-radius: 28px;
+  background: var(--color-surface);
+}
+
+.report-form__service {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  color: var(--color-text);
+  font-size: var(--fs-base);
+}
+
+.report-form__reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.report-form__reason {
+  padding: 10px var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-sage);
+  color: var(--color-dark);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.report-form__reason:hover {
+  background: var(--color-sage-2);
+}
+
+.report-form__reason.is-active {
+  background: var(--color-dark);
+  color: #fff;
+}
+
+.report-form__required {
+  color: var(--color-danger);
+  font-weight: 500;
+}
+
+.report-form__optional {
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
+.report-form__textarea {
+  position: relative;
+}
+
+.report-form__textarea .textarea {
+  min-height: 180px;
+  padding-bottom: 36px;
+}
+
+.report-form__count {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-3);
+  color: var(--color-muted);
+  font-size: var(--fs-xs);
+  pointer-events: none;
+}
+
+.report-form .upload {
+  border-color: var(--color-olive);
+  background: #f9faf6;
+}
+
+.report-form__submit:disabled {
+  background: var(--color-neutral-chip);
+  color: var(--color-muted-strong);
+  opacity: 1;
+}
+
+.report-tips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border-radius: 28px;
+  background: var(--color-dark);
+  color: #fff;
+}
+
+.report-tips .eyebrow {
+  color: #c9d1b8;
+}
+
+.report-tips ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: var(--fs-base);
+}
+
+.report-tips__note {
+  color: #c9d1b8;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .report-form {
+    padding: var(--space-8);
+  }
+}
+
+@media (min-width: 1024px) {
+  .report-layout {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: var(--space-8);
+  }
+}
+
+.report-tips ul {
+  list-style: disc;
+}
+
+.report-tips li::marker {
+  color: #c9d1b8;
+}
+
+.report-form .label {
+  font-size: var(--fs-base);
+  font-weight: 600;
+}

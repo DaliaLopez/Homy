@@ -1,0 +1,50 @@
+/* Modal (hoja inferior en móvil, tarjeta centrada en escritorio). */
+
+@layer components {
+  /* ======================================================================
+     Modal: hoja inferior en móvil, tarjeta centrada en escritorio
+     ====================================================================== */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: var(--space-3);
+    background: var(--color-overlay);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 520px;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+    background: #fff;
+    box-shadow: var(--shadow-modal);
+  }
+}
+
+@media (min-width: 768px) {
+  .modal-backdrop {
+    align-items: center;
+    padding: var(--space-6);
+  }
+
+  .modal {
+    padding: var(--space-8);
+  }
+}
+
+@layer components {
+  /* Verificación en revisión (modal tras enviar y página de estado) */
+  .modal--bare {
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+}

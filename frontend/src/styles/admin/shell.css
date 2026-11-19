@@ -1,0 +1,109 @@
+/* Administración: encabezado y barra inferior. */
+
+@layer components {
+  /* ======================================================================
+     Encabezado de administración: nav en pill; menú desplegable en móvil
+     ====================================================================== */
+  .admin-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    border-bottom: 1px solid var(--color-border-neutral);
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .admin-header .nav-pill {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .admin-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: var(--space-1) var(--gutter) var(--space-5);
+  }
+
+  .admin-menu .nav-pill__link {
+    padding: 14px 18px;
+    font-size: var(--fs-md);
+    background: var(--color-card);
+    color: var(--color-dark);
+  }
+
+  .admin-menu .nav-pill__link.is-active {
+    background: var(--color-dark);
+    color: #fff;
+  }
+
+  .menu-toggle {
+    display: grid;
+  }
+}
+
+@media (max-width: 1099px) {
+  /* Administración: la nav completa no cabe en tablets estrechas;
+  debajo de 1100px se usa el menú desplegable. */
+
+  .admin-header .nav-pill {
+    display: none;
+  }
+}
+
+@media (min-width: 1100px) {
+  .admin-header .menu-toggle,
+  .admin-menu {
+    display: none;
+  }
+}
+
+@layer components {
+  /* Administración: barra flotante inferior (6 accesos) por debajo de 1100px */
+  .bottom-nav--admin {
+    width: calc(100% - 24px);
+    max-width: 560px;
+  }
+
+  .bottom-nav--admin .bottom-nav__item {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 32px;
+  }
+
+  .bottom-nav--admin .bottom-nav__item svg {
+    flex-shrink: 0;
+  }
+
+  .bottom-nav--admin .bottom-nav__item.is-active {
+    flex: 0 1 auto;
+    min-width: 0;
+    padding-inline: 12px;
+    overflow: hidden;
+  }
+
+  .bottom-nav--admin .bottom-nav__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  /* Administración entre 768px y 1099px: la nav superior no cabe, se usa la barra inferior.
+  Sin @layer a propósito: debe ganarle a ".bottom-nav { display: none }" de components.css. */
+
+  .bottom-nav.bottom-nav--admin {
+    display: flex;
+  }
+
+  .page.page--admin {
+    padding-bottom: var(--bottom-nav-space);
+  }
+}
+
+@media (min-width: 1100px) {
+  .bottom-nav.bottom-nav--admin {
+    display: none;
+  }
+}

@@ -1,0 +1,57 @@
+/* Avatares. */
+
+@layer components {
+  /* ======================================================================
+     Avatares
+     ====================================================================== */
+  .avatar {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: var(--avatar, 64px);
+    height: var(--avatar, 64px);
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: var(--avatar-radius, var(--radius-lg));
+    background: var(--color-sage-3);
+    color: var(--color-olive-text);
+    font-size: calc(var(--avatar, 64px) * 0.32);
+    font-weight: 700;
+  }
+
+  .avatar img {
+    object-fit: cover;
+  }
+
+  .avatar--sm {
+    --avatar: 44px;
+    --avatar-radius: var(--radius-sm);
+  }
+
+  .avatar--lg {
+    --avatar: 96px;
+    --avatar-radius: 24px;
+  }
+
+  .avatar--round {
+    --avatar-radius: var(--radius-pill);
+  }
+
+  .avatar--center {
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .avatar {
+    --avatar: 56px;
+  }
+
+  .avatar--sm {
+    --avatar: 40px;
+  }
+
+  .avatar--lg {
+    --avatar: 88px;
+  }
+}
